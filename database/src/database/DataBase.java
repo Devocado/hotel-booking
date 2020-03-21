@@ -7,13 +7,13 @@ public class DataBase implements DataSource {
 
 	@Override
 	public boolean saveCustomer(Customer customer) {
-		// TODO Auto-generated method stub
+		System.out.println("Saving customer");
 		return false;
 	}
 
 	@Override
 	public Customer fetchCustomer() {
-		// TODO Auto-generated method stub
+		System.out.println("Fetching customer");
 		return null;
 	}
 
