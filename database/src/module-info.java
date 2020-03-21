@@ -1,0 +1,3 @@
+module database {
+	requires main;
+}
