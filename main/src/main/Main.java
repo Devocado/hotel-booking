@@ -14,8 +14,13 @@ public class Main {
 		System.out.println("Project is running!");
 		dataSource = loadDataSource();
 		
-		Customer cust = new Customer("Joe", "Bloggs", "joe@bloggs.com");
-		dataSource.saveCustomer(cust);
+		Customer cust = dataSource.fetchCustomer("henryagen@hotmail.com");
+		//dataSource.saveCustomer(cust);
+		//cust = dataSource.fetchCustomer(cust.getEmail());
+		
+		System.out.println(dataSource.deleteCustomer(cust));
+		
+		System.out.println(cust);
 
 	}
 	

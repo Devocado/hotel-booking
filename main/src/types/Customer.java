@@ -5,10 +5,15 @@ public class Customer {
 	private String email;
 	private String phone;
 	
-	public Customer(String firstName, String lastName, String email) {
+	public Customer(String firstName, String lastName, String email, String phone) {
 		this.firstName = firstName;
 		this.lastName = lastName;
 		this.email = email;
+		this.phone = phone;
+	}
+	
+	public Customer(String firstName, String lastName, String email) {
+	    this(firstName, lastName, email, email);
 	}
 	
 	public String getFirstName() {
