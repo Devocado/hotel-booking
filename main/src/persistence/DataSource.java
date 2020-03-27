@@ -1,6 +1,9 @@
-package types;
+package persistence;
 
 import java.util.List;
+
+import types.Customer;
+import types.Reservation;
 
 public interface DataSource {
 	

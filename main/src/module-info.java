@@ -1,4 +1,5 @@
 module main {
 	exports types;
-	uses types.DataSource;
+	exports persistence;
+	uses persistence.DataSource;
 }

@@ -2,8 +2,8 @@ package main;
 
 import java.util.ServiceLoader;
 
+import persistence.DataSource;
 import types.Customer;
-import types.DataSource;
 
 public class Main {
 	

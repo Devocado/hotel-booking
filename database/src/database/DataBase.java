@@ -7,10 +7,12 @@ import java.io.IOException;
 import java.sql.*;
 
 import java.util.Properties;
+
+import persistence.DataSource;
+
 import java.util.List;
 
 import types.Customer;
-import types.DataSource;
 import types.Reservation;
 
 public class DataBase implements DataSource {
