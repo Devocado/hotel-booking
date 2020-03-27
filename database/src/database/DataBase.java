@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.sql.*;
 
 import java.util.Properties;
+import java.util.List;
 
 import types.Customer;
 import types.DataSource;
@@ -18,47 +19,28 @@ public class DataBase implements DataSource {
 			"/home/jesse/Jesse/Java/EclipseProjects/HotelBooking/database/resources/database.properties";
 	private static final String DATABASE_URL = "jdbc:mysql://localhost:3306/hotel";
 	
-//	public static void main(String[] args) {
-//		Properties p = new Properties();
-//		try {
-//			MysqlDataSource dataSource = new MysqlDataSource();
-//			dataSource.setUser("hotelapp");
-//	        dataSource.setPassword("qazwsx");
-//	        dataSource.setServerName("localhost");
-//	        dataSource.setDatabaseName("hotel");
-//	        
-//	        Connection conn  = dataSource.getConnection();
-//	        
-//	        System.out.println("Connection is working: " + conn.isValid(10));
-//		}
-//		catch (Exception e) {
-//			e.printStackTrace();
-//		}
-//	}
+	//customers table
+	private static final String CUSTOMER_TABLE = "customers";
+	private static final String FIRST_NAME = "f_name";
+	private static final String LAST_NAME = "l_name";
+	private static final String EMAIL = "email";
+	private static final String PHONE = "phone";
+	
+	@SuppressWarnings("unused")
+	private static final String RESERVATION_TABLE = "reservations";
+	
+	private Connection conn;
 	
 	public DataBase() {
 		Properties p = new Properties();
 		try (BufferedReader buff = new BufferedReader(new FileReader(DATABASE_PROPERTIES))) {
 			
 			p.load(buff);
-			
-			Connection conn = DriverManager.getConnection(DATABASE_URL, p);
-
-	        Statement stmnt = conn.createStatement();
-	        
-	        ResultSet result = stmnt.executeQuery("SELECT * FROM customers");
-	        
-	        System.out.println(result);
-	        
-	        while(result.next()) {
-	        	System.out.printf("%s %s %s %n", result.getString(2), result.getString(3), result.getString(4) );
-	        }
-	        
-	        
+			conn = DriverManager.getConnection(DATABASE_URL, p);
 		} 
 		catch (IOException e) {
-			//throw new RuntimeException("Missing database properties");
-			e.printStackTrace();
+			throw new RuntimeException("Missing database properties");
+			//e.printStackTrace();
 		} catch (SQLException sqle) {
 			throw new RuntimeException("Could not connect to database");
 		}
@@ -66,28 +48,112 @@ public class DataBase implements DataSource {
 
 	@Override
 	public boolean saveCustomer(Customer customer) {
-		System.out.println("Saving customer");
-		return false;
+	    final String INSERT_CUST = "INSERT INTO "+CUSTOMER_TABLE+" ("+FIRST_NAME+", "+LAST_NAME+", "+EMAIL+", "+PHONE+") VALUES(?, ?, ?, ?)";
+	    
+	    boolean insertSucceeded = false;
+	    
+	    try (PreparedStatement pStmt = conn.prepareStatement(INSERT_CUST)) {
+	        pStmt.setString(1, customer.getFirstName());
+	        pStmt.setString(2, customer.getLastName());
+	        pStmt.setString(3, customer.getEmail());
+	        pStmt.setString(4, customer.getPhone());
+	        
+	        insertSucceeded = pStmt.executeUpdate() == 1;
+	        
+	    } catch (SQLException sqle) {
+	        System.err.println(sqle.getMessage());
+	    }
+		return insertSucceeded;
 	}
 
 	@Override
 	public Customer fetchCustomer(String email) {
-		System.out.println("Fetching customer");
-		return null;
+	    final String GET_CUST = "SELECT "+FIRST_NAME+", "+LAST_NAME+", "+PHONE+" FROM "+CUSTOMER_TABLE+" WHERE "+EMAIL+"= ?";
+	    
+	    Customer cust = null;
+	    
+		try (PreparedStatement pStmt = conn.prepareStatement(GET_CUST)) {
+		    pStmt.setString(1, email);
+		    ResultSet rs = pStmt.executeQuery();
+		    rs.first();
+		    cust = new Customer(rs.getString(1), rs.getString(2), email, rs.getString(3));
+		    
+		} catch (SQLException sqle) {
+		    System.err.println(sqle.getMessage());
+		}
+		return cust;
+	}
+	
+	public boolean updateCustomer(Customer oldCust, Customer newCust) { 
+	    
+	    throw new UnsupportedOperationException("Not implemented"); 
+	    
+//	    final String UPDATE_CUST = "UPDATE "+FIRST_NAME+", "+LAST_NAME+", "+EMAIL+" VALUES (? ? ?) ON "+CUSTOMER_TABLE+" WHERE "+EMAIL+"= ?";
+//	    
+//	    boolean updateSucceeded = false;
+//	    
+//	    try (PreparedStatement pStmt = conn.prepareStatement(UPDATE_CUST)) {
+//	        
+//	        pStmt.setString(1, newCust.getFirstName());
+//	        pStmt.setString(2, newCust.getLastName());
+//	        pStmt.setString(3, newCust.getEmail());
+//	        
+//	        updateSucceeded = pStmt.executeUpdate() == 1;
+//	        
+//	    } catch (SQLException sqle) {
+//	        System.err.println(sqle.getMessage());
+//	    }
+//	    
+//	    return updateSucceeded;
+	    
+	}
+	
+	@Override
+	public boolean deleteCustomer(Customer customer) {
+	    return deleteCustomer(customer.getEmail());
+	}
+	
+	public boolean deleteCustomer(String email) {
+	    final String DELETE_CUST = "DELETE FROM "+CUSTOMER_TABLE+" WHERE "+EMAIL+"= ?";
+	    
+	    boolean deleteSucceeded = false;
+	    
+	    try (PreparedStatement pStmt = conn.prepareStatement(DELETE_CUST)) {
+	        pStmt.setString(1, email);
+	        
+	        int rowsAffected = pStmt.executeUpdate();
+	        assert rowsAffected <= 1: "Panic Stations!! More than one customer was deleted!!";
+	        deleteSucceeded = rowsAffected == 1;
+	        
+	    } catch (SQLException sqle) {
+	        System.err.println(sqle.getMessage());
+	    }
+	    return deleteSucceeded;
 	}
 
 	@Override
 	public boolean saveReservation(Reservation reservation) {
-		// TODO Auto-generated method stub
-		return false;
+		throw new UnsupportedOperationException("Not implemented"); 
 	}
 
 	@Override
 	public Reservation fetchReservation(int id) {
-		// TODO Auto-generated method stub
-		return null;
+	    throw new UnsupportedOperationException("Not implemented"); 
 	}
 	
-	
+	@Override
+    public List<Reservation> fetchReservations(Customer customer) {
+	    throw new UnsupportedOperationException("Not implemented");
+	}
 
+    @Override
+    public boolean deleteReservation(Reservation reservation) {
+        throw new UnsupportedOperationException("Not implemented"); 
+    }
+
+    @Override
+    public boolean updateReservation(Reservation oldReservation, Reservation newReservation) {
+        throw new UnsupportedOperationException("Not implemented"); 
+    }
+	
 }
