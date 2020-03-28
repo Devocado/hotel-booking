@@ -15,10 +15,13 @@ public class Main {
 		dataSource = loadDataSource();
 		
 		Customer cust = dataSource.fetchCustomer("henryagen@hotmail.com");
-		//dataSource.saveCustomer(cust);
-		//cust = dataSource.fetchCustomer(cust.getEmail());
 		
-		System.out.println(dataSource.deleteCustomer(cust));
+		if (cust == null) {
+		    cust = new Customer("Harry", "Lampton", "hlampton@starmail.uk");
+		    dataSource.addCustomer(cust, "Secretpassword");
+		}
+		
+		//System.out.println(dataSource.deleteCustomer(cust));
 		
 		System.out.println(cust);
 
@@ -27,4 +30,6 @@ public class Main {
 	public static DataSource loadDataSource() {
 		return ServiceLoader.load(DataSource.class).findFirst().orElseThrow();
 	}
+	
+	
 }

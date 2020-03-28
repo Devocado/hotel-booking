@@ -26,6 +26,7 @@ public class DataBase implements DataSource {
 	private static final String FIRST_NAME = "f_name";
 	private static final String LAST_NAME = "l_name";
 	private static final String EMAIL = "email";
+	private static final String PASSWORD = "password";
 	private static final String PHONE = "phone";
 	
 	@SuppressWarnings("unused")
@@ -49,8 +50,9 @@ public class DataBase implements DataSource {
 	}
 
 	@Override
-	public boolean saveCustomer(Customer customer) {
-	    final String INSERT_CUST = "INSERT INTO "+CUSTOMER_TABLE+" ("+FIRST_NAME+", "+LAST_NAME+", "+EMAIL+", "+PHONE+") VALUES(?, ?, ?, ?)";
+	public boolean addCustomer(Customer customer, String password) {
+	    final String INSERT_CUST = "INSERT INTO "+CUSTOMER_TABLE+" ("+FIRST_NAME+", "+LAST_NAME+", "+EMAIL+
+	            ", "+PASSWORD+", "+PHONE+")"+ " VALUES(?, ?, ?, ?, ?)";
 	    
 	    boolean insertSucceeded = false;
 	    
@@ -58,7 +60,8 @@ public class DataBase implements DataSource {
 	        pStmt.setString(1, customer.getFirstName());
 	        pStmt.setString(2, customer.getLastName());
 	        pStmt.setString(3, customer.getEmail());
-	        pStmt.setString(4, customer.getPhone());
+	        pStmt.setString(4, password);
+	        pStmt.setString(5, customer.getPhone());
 	        
 	        insertSucceeded = pStmt.executeUpdate() == 1;
 	        
@@ -77,8 +80,9 @@ public class DataBase implements DataSource {
 		try (PreparedStatement pStmt = conn.prepareStatement(GET_CUST)) {
 		    pStmt.setString(1, email);
 		    ResultSet rs = pStmt.executeQuery();
-		    rs.first();
-		    cust = new Customer(rs.getString(1), rs.getString(2), email, rs.getString(3));
+		    if (rs.first() ) {
+		        cust = new Customer(rs.getString(1), rs.getString(2), email, rs.getString(3));
+		    }
 		    
 		} catch (SQLException sqle) {
 		    System.err.println(sqle.getMessage());

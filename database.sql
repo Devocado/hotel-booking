@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS `hotel`.`customers` (
   `f_name` VARCHAR(45) NOT NULL,
   `l_name` VARCHAR(45) NOT NULL,
   `email` VARCHAR(150) NOT NULL,
+  `password` VARCHAR(150) NOT NULL,
   `phone` VARCHAR(15) NULL,
   `created` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),

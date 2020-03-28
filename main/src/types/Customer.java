@@ -13,7 +13,7 @@ public class Customer {
 	}
 	
 	public Customer(String firstName, String lastName, String email) {
-	    this(firstName, lastName, email, email);
+	    this(firstName, lastName, email, null);
 	}
 	
 	public String getFirstName() {

@@ -7,7 +7,7 @@ import types.Reservation;
 
 public interface DataSource {
 	
-	boolean saveCustomer(Customer customer);
+	boolean addCustomer(Customer customer, String password);
 	Customer fetchCustomer(String email);
 	boolean deleteCustomer(Customer customer);
 	boolean updateCustomer(Customer oldCust, Customer newCust);
