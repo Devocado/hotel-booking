@@ -45,4 +45,9 @@ public class Customer {
 	public String toString() {
 		return String.format("%s %s %s %s", firstName, lastName, email, phone);
 	}
+	
+	@Override
+	public Customer clone() {
+	    return new Customer(firstName, lastName, email, phone);
+	}
 }

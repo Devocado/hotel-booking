@@ -93,11 +93,8 @@ public class DataBase implements DataSource {
 	@Override
 	public boolean updateCustomer(Customer oldCust, Customer newCust) { 
 	    
-//	    throw new UnsupportedOperationException("Not implemented"); 
-	    
 	    final String UPDATE_CUST = "UPDATE "+CUSTOMER_TABLE+" SET "+FIRST_NAME+"= ?, "+
 	            LAST_NAME+"= ?, "+EMAIL+"= ?, "+PHONE+"= ?  WHERE "+EMAIL+"= ?";
-//	    UPDATE table_name SET column1 = value1, column2 = value2 WHERE condition;
 	    
 	    boolean updateSucceeded = false;
 	    
@@ -116,7 +113,26 @@ public class DataBase implements DataSource {
 	    }
 	    
 	    return updateSucceeded;
-	    
+	}
+	
+	@Override
+	public boolean updateCustomerPassword(Customer cust, String newPassword) {
+	    final String UPDATE_CUST = "UPDATE "+CUSTOMER_TABLE+" SET "+PASSWORD+"= ?  WHERE "+EMAIL+"= ?";
+        
+        boolean updateSucceeded = false;
+        
+        try (PreparedStatement pStmt = conn.prepareStatement(UPDATE_CUST)) {
+            
+            pStmt.setString(1, newPassword);
+            pStmt.setString(2, cust.getEmail());
+            
+            updateSucceeded = pStmt.executeUpdate() == 1;
+            
+        } catch (SQLException sqle) {
+            System.err.println(sqle.getMessage());
+        }
+        
+        return updateSucceeded;
 	}
 	
 	@Override

@@ -12,6 +12,7 @@ public interface DataSource {
 	boolean deleteCustomer(Customer customer);
 	boolean updateCustomer(Customer oldCust, Customer newCust);
 	String fetchPassword(String email);
+	boolean updateCustomerPassword(Customer cust, String newPassword);
 	
 	
 	boolean saveReservation(Reservation reservation);
