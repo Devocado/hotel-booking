@@ -1,18 +1,10 @@
--- MySQL Workbench Forward Engineering
-
-SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
-SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
-SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='TRADITIONAL,ALLOW_INVALID_DATES';
-
 -- -----------------------------------------------------
 -- Schema hotel
 -- -----------------------------------------------------
-
--- -----------------------------------------------------
--- Schema hotel
--- -----------------------------------------------------
-CREATE SCHEMA IF NOT EXISTS `hotel` DEFAULT CHARACTER SET utf8 ;
+CREATE SCHEMA IF NOT EXISTS `hotel`;
 USE `hotel` ;
+
+SHOW WARNINGS;
 
 -- -----------------------------------------------------
 -- Table `hotel`.`customers`
@@ -23,13 +15,12 @@ CREATE TABLE IF NOT EXISTS `hotel`.`customers` (
   `l_name` VARCHAR(45) NOT NULL,
   `email` VARCHAR(150) NOT NULL,
   `password` VARCHAR(150) NOT NULL,
-  `phone` VARCHAR(15) NULL,
+  `phone` VARCHAR(45) NULL,
   `created` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  UNIQUE INDEX `email_UNIQUE` (`email` ASC))
-ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8;
-
+  UNIQUE INDEX `email_UNIQUE` (`email` ASC));
+  
+SHOW WARNINGS;
 
 -- -----------------------------------------------------
 -- Table `hotel`.`rooms`
@@ -38,10 +29,9 @@ CREATE TABLE IF NOT EXISTS `hotel`.`rooms` (
   `id` INT NOT NULL,
   `price_per_night` DECIMAL NOT NULL,
   `max_guests` INT NOT NULL,
-  PRIMARY KEY (`id`))
-ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8;
-
+  PRIMARY KEY (`id`));
+  
+SHOW WARNINGS;
 
 -- -----------------------------------------------------
 -- Table `hotel`.`reservations`
@@ -59,10 +49,9 @@ CREATE TABLE IF NOT EXISTS `hotel`.`reservations` (
     FOREIGN KEY (`customer_id`)
     REFERENCES `hotel`.`customers` (`id`)
     ON DELETE CASCADE
-    ON UPDATE CASCADE)
-ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8;
+    ON UPDATE CASCADE);
 
+SHOW WARNINGS;
 
 -- -----------------------------------------------------
 -- Table `hotel`.`room_reservations`
@@ -84,11 +73,6 @@ CREATE TABLE IF NOT EXISTS `hotel`.`room_reservations` (
     FOREIGN KEY (`room_id`)
     REFERENCES `hotel`.`rooms` (`id`)
     ON DELETE CASCADE
-    ON UPDATE CASCADE)
-ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8;
-
-
-SET SQL_MODE=@OLD_SQL_MODE;
-SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
-SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
+    ON UPDATE CASCADE);
+    
+SHOW WARNINGS;

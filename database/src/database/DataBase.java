@@ -90,27 +90,32 @@ public class DataBase implements DataSource {
 		return cust;
 	}
 	
+	@Override
 	public boolean updateCustomer(Customer oldCust, Customer newCust) { 
 	    
-	    throw new UnsupportedOperationException("Not implemented"); 
+//	    throw new UnsupportedOperationException("Not implemented"); 
 	    
-//	    final String UPDATE_CUST = "UPDATE "+FIRST_NAME+", "+LAST_NAME+", "+EMAIL+" VALUES (? ? ?) ON "+CUSTOMER_TABLE+" WHERE "+EMAIL+"= ?";
-//	    
-//	    boolean updateSucceeded = false;
-//	    
-//	    try (PreparedStatement pStmt = conn.prepareStatement(UPDATE_CUST)) {
-//	        
-//	        pStmt.setString(1, newCust.getFirstName());
-//	        pStmt.setString(2, newCust.getLastName());
-//	        pStmt.setString(3, newCust.getEmail());
-//	        
-//	        updateSucceeded = pStmt.executeUpdate() == 1;
-//	        
-//	    } catch (SQLException sqle) {
-//	        System.err.println(sqle.getMessage());
-//	    }
-//	    
-//	    return updateSucceeded;
+	    final String UPDATE_CUST = "UPDATE "+CUSTOMER_TABLE+" SET "+FIRST_NAME+"= ?, "+
+	            LAST_NAME+"= ?, "+EMAIL+"= ?, "+PHONE+"= ?  WHERE "+EMAIL+"= ?";
+//	    UPDATE table_name SET column1 = value1, column2 = value2 WHERE condition;
+	    
+	    boolean updateSucceeded = false;
+	    
+	    try (PreparedStatement pStmt = conn.prepareStatement(UPDATE_CUST)) {
+	        
+	        pStmt.setString(1, newCust.getFirstName());
+	        pStmt.setString(2, newCust.getLastName());
+	        pStmt.setString(3, newCust.getEmail());
+	        pStmt.setString(4, newCust.getPhone());
+	        pStmt.setString(5, oldCust.getEmail());
+	        
+	        updateSucceeded = pStmt.executeUpdate() == 1;
+	        
+	    } catch (SQLException sqle) {
+	        System.err.println(sqle.getMessage());
+	    }
+	    
+	    return updateSucceeded;
 	    
 	}
 	
@@ -135,6 +140,27 @@ public class DataBase implements DataSource {
 	        System.err.println(sqle.getMessage());
 	    }
 	    return deleteSucceeded;
+	}
+	
+	@Override
+	public String fetchPassword(String email) {
+	    final String GET_PASS = "SELECT "+PASSWORD+" FROM "+CUSTOMER_TABLE+" WHERE "+EMAIL+"= ?";
+	    
+	    String password = "";
+	    
+	    try (PreparedStatement pStmt = conn.prepareStatement(GET_PASS) ) {
+	        
+	        pStmt.setString(1, email);
+	        ResultSet rs = pStmt.executeQuery();
+	        
+	        if(rs.first()) {
+	            password = rs.getString(PASSWORD);
+	        }
+	    } catch (SQLException sqle) {
+	        System.err.println(sqle.getMessage());
+	        
+	    }
+	    return password;
 	}
 
 	@Override
