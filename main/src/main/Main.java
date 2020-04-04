@@ -1,9 +1,12 @@
 package main;
 
+//import java.io.Console;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.ResourceBundle;
 import java.util.Scanner;
 import java.util.ServiceLoader;
+import java.util.concurrent.TimeUnit;
 
 import persistence.DataSource;
 import types.Customer;
@@ -13,18 +16,25 @@ public class Main {
 	
 	private static DataSource dataSource;
 	private static final Scanner sc = new Scanner(System.in);
+//	private static final Console cons = System.console();
 	private static Customer cust;
+	
+	private static ResourceBundle resource = ResourceBundle.getBundle("messages");
 
 	public static void main(String[] args) {
 		
 		dataSource = loadDataSource();
 		
+		clearScreen(0);
 		loginMenu();
 		
 		boolean hasExited = false;
         
         while (!hasExited && cust != null) {
-            System.out.print("Please select an option\n1 - Reservations\n2 - Manage account\n0 - Exit\n>>>");
+            
+            clearScreen(0);
+            System.out.print(resource.getString("mainMenu"));
+            //System.out.print("Please select an option\n1 - Reservations\n2 - Manage account\n0 - Exit\n>>>");
             if (sc.hasNextInt()) {
                 switch (Integer.parseInt(sc.nextLine())) {
                     case 0:
@@ -33,8 +43,10 @@ public class Main {
                         break;
                     case 1:
                         System.out.println("Sorry, that has not been implemented yet");
+                        clearScreen(2);
                         break;
                     case 2:
+                        clearScreen(0);
                         accountMenu();
                         break;
                     default:
@@ -44,27 +56,35 @@ public class Main {
                 sc.nextLine();
             }
         }
-		System.out.println(cust);
+//		System.out.println(cust);
 	}
 	
 	public static void accountMenu() {
         
         boolean hasExited = false;
         while (!hasExited) {
-            System.out.print("Please select an option\n1 - Update details\n2 - Change password\n"
-                    + "3 - Delete account\n0 - Exit\n>>>");
+            clearScreen(0);
+            System.out.print(resource.getString("accountMenu"));
+//            System.out.print("Please select an option\n1 - Update details\n2 - Change password\n"
+//                    + "3 - Delete account\n0 - Exit\n>>>");
             if (sc.hasNextInt()) {
                 switch (Integer.parseInt(sc.nextLine())) {
                     case 0:
                         hasExited = true;
+                        clearScreen(0);
                         break;
                     case 1:
+                        clearScreen(0);
                         cust = updateCustomer();
                         break;
                     case 2:
-                        System.out.println(updatePassword());
+                        clearScreen(0);
+//                        System.out.println(updatePassword());
+                        updatePassword();
+                        clearScreen(3);
                         break;
                     case 3:
+                        clearScreen(0);
                         dataSource.deleteCustomer(cust);
                         cust = null;
                         hasExited = true;
@@ -83,15 +103,20 @@ public class Main {
 	    
 	    boolean hasExited = false;
 	    while (!hasExited && cust == null) {
-            System.out.print("Please select an option\n1 - Make a reservation\n"
-                    + "2 - Remove a reservation\n3 - View reservations\n0 - Exit\n>>>");
+	        
+	        clearScreen(0);
+	        System.out.print(resource.getString("reservationMenu"));
+//            System.out.print("Please select an option\n1 - Make a reservation\n"
+//                    + "2 - Remove a reservation\n3 - View reservations\n0 - Exit\n>>>");
             if (sc.hasNextInt()) {
                 switch (Integer.parseInt(sc.nextLine())) {
                     case 0:
                         hasExited = true;
+                        clearScreen(3);
                         break;
                     case 1:
                         cust = loginCustomer();
+                        clearScreen(3);
                         break;
                     case 2:
                         //cust = createCustomer();
@@ -111,50 +136,73 @@ public class Main {
 	public static boolean updatePassword() {
 	    boolean updateSucceeded = false;
 	    
-	    System.out.print("Please enter your current password: \n>>>");
+//	    System.out.print("Please enter your current password: \n>>>");
+	    System.out.print(resource.getString("oldPassword"));
         String oldPassword = sc.nextLine();
-        System.out.print("Please enter your new password: \n>>>");
-        String newPassword = sc.nextLine();
         
         if (validateCustomer(cust.getEmail(), oldPassword) ) {
+        
+//            System.out.print("Please enter your new password: \n>>>");
+            System.out.print(resource.getString("newPassword"));
+            String newPassword = sc.nextLine();
+            
             updateSucceeded = dataSource.updateCustomerPassword(cust, newPassword);
+        } 
+        else {
+            System.out.print(resource.getString("wrongPassword"));
+//            System.out.println("You entered your current password incorrectly");
         }
+        
         return updateSucceeded;
     }
 	
 	public static Customer getCustomerInfo() {
-        System.out.println("Please enter your details:");
-        System.out.print("First name: >>>");
-        String firstName = sc.nextLine();
-        System.out.print("Last name: >>>");
-        String lastName = sc.nextLine();
-        System.out.print("Email address: >>>");
-        String email = sc.nextLine();
-        System.out.print("Phone number, or hit enter: >>>");
-        String phone = sc.nextLine();
+//        System.out.println("Please enter your details:");
+	    System.out.print(resource.getString("details"));
+//        System.out.print("First name: >>>");
+        System.out.print(resource.getString("firstName"));
+	    String firstName = sc.nextLine();
+	    
+//        System.out.print("Last name: >>>");
+        System.out.print(resource.getString("lastName"));
+	    String lastName = sc.nextLine();
+	    
+//        System.out.print("Email address: >>>");
+        System.out.print(resource.getString("email"));
+	    String email = sc.nextLine();
+	    
+//        System.out.print("Phone number, or hit enter: >>>");
+        System.out.print(resource.getString("phone"));
+	    String phone = sc.nextLine();
         phone = phone.equals("") ? null : phone;  
         
         return new Customer(firstName, lastName, email, phone); 
     }
     
     public static String getCustomerPassword() {
-        System.out.print("Please enter a password for your account: >>>");
+        
+        
+        System.out.print(resource.getString("newPassword"));
+//        System.out.print("Please enter a new password for your account: >>>");
         String password = sc.nextLine();
         
         return password;
     }
 	
 	public static Customer loginCustomer() {
-	    System.out.print("Please enter your email address: \n>>>");
-        String email = sc.nextLine();
-        System.out.print("Please enter your account password: \n>>>");
-        String password = sc.nextLine();
+//	    System.out.print("Please enter your email address:\n >>>");
+        System.out.print(resource.getString("email"));
+	    String email = sc.nextLine();
+//        System.out.print("Please enter your account password:\n >>>");
+        System.out.print(resource.getString("password"));
+	    String password = sc.nextLine();
         
         if (validateCustomer(email, password)) {
-            System.out.println("Logged in successfully");
+            System.out.print(resource.getString("successfulLogin"));
             return dataSource.fetchCustomer(email);
         }
         else {
+            System.out.print(resource.getString("unsuccessfulLogin"));
             return null;
         }
 	}
@@ -169,7 +217,8 @@ public class Main {
 	    boolean hasExited = false;
 	    
 	    while (!hasExited && cust == null) {
-	        System.out.print("Please select an option\n1 - Login\n2 - Sign up\n0 - Exit\n>>>");
+	        System.out.print(resource.getString("loginMenu"));
+//	        System.out.print("Please select an option\n1 - Login\n2 - Sign up\n0 - Exit\n>>>");
 	        if (sc.hasNextInt()) {
 	            switch (Integer.parseInt(sc.nextLine())) {
 	                case 0:
@@ -178,10 +227,12 @@ public class Main {
 	                    break;
 	                case 1:
 	                    cust = loginCustomer();
+	                    clearScreen(3);
 	                    break;
 	                case 2:
 	                    cust = getCustomerInfo();
 	                    dataSource.addCustomer(cust, getCustomerPassword());
+	                    clearScreen(0);
 	                    break;
 	                default:
 	            }
@@ -198,6 +249,16 @@ public class Main {
 
 	public static DataSource loadDataSource() {
         return ServiceLoader.load(DataSource.class).findFirst()
-                .orElseThrow(() -> new NoSuchElementException("No datasource service provider found"));
+                .orElseThrow(() -> new NoSuchElementException(resource.getString("noDatasourceErr")));
     }
+	
+	public static void clearScreen(int secondsDelay) {
+	    
+	    try {
+            TimeUnit.SECONDS.sleep(secondsDelay);
+        } catch (InterruptedException ie) {}
+	    
+	    System.out.print("\033[H\033[2J");
+	    System.out.flush();
+	}
 }

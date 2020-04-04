@@ -4,16 +4,23 @@ import java.time.LocalDateTime;
 import java.math.BigDecimal;
 
 public class Reservation {
-	Customer customer;
-	LocalDateTime start, end;
-	BigDecimal totalCost;
+    
+    private long id = -1;
+	private Customer customer;
+	private LocalDateTime startDate, endDate;
+	private BigDecimal totalCost;
+	private Room[] rooms;
 	
-	public Reservation(Customer cust, LocalDateTime start, LocalDateTime end) {
+	public Reservation(Customer cust, LocalDateTime start, LocalDateTime end, Room... rooms) {
 		this.customer = cust;
-		this.start = start;
-		this.end = end;
+		this.startDate = start;
+		this.endDate = end;
+		this.rooms = rooms;
 	}
 	
+	public long getId() {
+	    return id < 0 ? -1 : id;
+	}
 	public Customer getCustomer() {
 		return customer;
 	}
@@ -21,21 +28,31 @@ public class Reservation {
 		this.customer = customer;
 	}
 	public LocalDateTime getStart() {
-		return start;
+		return startDate;
 	}
 	public void setStart(LocalDateTime start) {
-		this.start = start;
+		this.startDate = start;
 	}
 	public LocalDateTime getEnd() {
-		return end;
+		return endDate;
 	}
 	public void setEnd(LocalDateTime end) {
-		this.end = end;
+		this.endDate = end;
 	}
 	public BigDecimal getTotalCost() {
 		return totalCost;
 	}
-	public void setTotalCost(BigDecimal totalCost) {
-		this.totalCost = totalCost;
+	
+	public Room[] getRooms() {
+        return rooms.clone();
+    }
+
+    public void setRooms(Room[] rooms) {
+        this.rooms = rooms;
+    }
+
+    @Override
+	public String toString() {
+	    return customer.getFirstName()+" "+customer.getLastName()+" "+startDate+" "+endDate;
 	}
 }

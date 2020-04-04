@@ -1,9 +1,10 @@
 INSERT INTO customers(f_name, l_name, email, password) 
 VALUES
-    ('Eugene', 'Baster', 'mailb@mymail.com', 'SecretPassword'),
-    ('Harry', 'Lampton', 'hlampton@starmail.uk', 'Secretpassword'),
-    ('Harriet', 'Thresher', 'hthresher@gmail.com', 'Secretpassword'),
-    ('George', 'West', 'gwest@gmail.com', 'Secretpassword'),
-    ('Fiona', 'Barrett', 'mailfiona@fionasmail.com', 'Secretpassword'),
-    ('Henry', 'Agen', 'henryagen@hotmail.com', 'Secretpassword'),
-    ('Josephine', 'Snow', 'josnow@starmail.com', 'Secretpassword');
+    ('Eugene', 'Baster', 'mailb@mymail.com', 'password'),
+    ('Harry', 'Lampton', 'hlampton@starmail.uk', 'password'),
+    ('Harriet', 'Thresher', 'hthresher@gmail.com', 'password'),
+    ('George', 'West', 'gwest@gmail.com', 'password'),
+    ('Fiona', 'Barrett', 'mailfiona@fionasmail.com', 'password'),
+    ('Henry', 'Agen', 'henryagen@hotmail.com', 'password'),
+    ('Josephine', 'Snow', 'josnow@starmail.com', 'password'),
+    ('Heidi', 'Avery', 'heidi@mymail.com', 'password');
