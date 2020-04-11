@@ -2,21 +2,18 @@ package types;
 
 import java.math.BigDecimal;
 
-public enum Room {
+public class Room {
     
-    BLUE_ROOM(new BigDecimal(1000), 6, "Blue Room"),
-    GREEN_ROOM(new BigDecimal(1000), 6, "Green Room"),
-    YELLOW_ROOM(new BigDecimal(1000), 6, "Yellow Room");
-    
-    Room(BigDecimal pricePerNight, int maxGuests, String name) {
-        this.pricePerNight = pricePerNight;
-        this.maxGuests = maxGuests;
-        this.name = name;
-    }
-    
+    private int roomNumber;
     private BigDecimal pricePerNight;
     private int maxGuests;
-    private String name;
+
+    
+    public Room(int roomNumber, BigDecimal pricePerNight, int maxGuests) {
+        this.roomNumber = roomNumber;
+        this.pricePerNight = pricePerNight;
+        this.maxGuests = maxGuests;
+    }
     
     public BigDecimal getPricePerNight() {
         return pricePerNight;
@@ -26,8 +23,13 @@ public enum Room {
         return maxGuests;
     }
     
-    public String getName() {
-        return name;
+    public int getRoomNumber() {
+        return roomNumber;
+    }
+    
+    @Override
+    public String toString() {
+        return String.format("%d %.2f %d", roomNumber, pricePerNight, maxGuests);
     }
 
 }
