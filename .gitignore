@@ -7,11 +7,17 @@ node_modules/
 npm-debug.log.*
 
 ######################
+# SQL
+######################
+*.sql
+
+######################
 # Eclipse
 ######################
 *.pydevproject
 .project
 .metadata
+bin/
 tmp/
 tmp/**/*
 *.tmp
