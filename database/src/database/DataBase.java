@@ -3,17 +3,19 @@ package database;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-
-import java.sql.*;
-
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 
 import persistence.DataSource;
-
-import java.util.List;
-
 import types.Customer;
 import types.Reservation;
+import types.Room;
 
 public class DataBase implements DataSource {
 	
@@ -31,6 +33,11 @@ public class DataBase implements DataSource {
 	
 	@SuppressWarnings("unused")
 	private static final String RESERVATION_TABLE = "reservations";
+	
+	private static final String ROOM_TABLE = "rooms";
+	private static final String ROOM_ID = "id";
+	private static final String ROOM_PRICE = "price_per_night";
+	private static final String MAX_GUESTS = "max_guests";
 	
 	private Connection conn;
 	
@@ -204,4 +211,48 @@ public class DataBase implements DataSource {
         throw new UnsupportedOperationException("Not implemented"); 
     }
 	
+    @Override
+    public Room getRoom(int roomNumber) {
+        final String GET_ROOM = "SELECT "+ROOM_PRICE+", "+MAX_GUESTS+" FROM "+ROOM_TABLE+" WHERE "+ROOM_ID+"= ?";
+        
+        Room room = null;
+        
+        try (PreparedStatement pStmt = conn.prepareStatement(GET_ROOM)) {
+            pStmt.setInt(1, roomNumber);
+            ResultSet rs = pStmt.executeQuery();
+            
+            if (rs.first()) {
+                room = new Room(roomNumber, rs.getBigDecimal(ROOM_PRICE), rs.getInt(MAX_GUESTS));
+            }
+        }
+        catch (SQLException e) {
+            System.err.println(e.getMessage());
+        }
+        return room;
+    }
+    
+    @Override
+    public List<Room> getRooms() {
+        
+        final String GET_ROOMS = "SELECT * FROM "+ROOM_TABLE;
+        
+        List<Room> rooms = new ArrayList<>();
+        
+        try (PreparedStatement pStmt = conn.prepareStatement(GET_ROOMS)){
+            ResultSet rs = pStmt.executeQuery();
+            
+            while(rs.next()) {
+                rooms.add(new Room(rs.getInt(ROOM_ID), rs.getBigDecimal(ROOM_PRICE), rs.getInt(MAX_GUESTS)));
+            }
+        } catch (SQLException sqle) {
+            System.err.println(sqle.getMessage());
+        }
+        return rooms;
+    }
+    
+    @Override
+    public List<Room> getUnreservedRooms() {
+        return null;
+    }
+    
 }

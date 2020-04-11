@@ -1,26 +1,29 @@
 package types;
 
-import java.time.LocalDateTime;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.List;
 
 public class Reservation {
     
-    private long id = -1;
+//    private long id = -1;
 	private Customer customer;
 	private LocalDateTime startDate, endDate;
 	private BigDecimal totalCost;
-	private Room[] rooms;
+	private List<Room> rooms;
 	
 	public Reservation(Customer cust, LocalDateTime start, LocalDateTime end, Room... rooms) {
 		this.customer = cust;
 		this.startDate = start;
 		this.endDate = end;
-		this.rooms = rooms;
+		this.rooms = Arrays.asList(rooms);
 	}
 	
-	public long getId() {
-	    return id < 0 ? -1 : id;
-	}
+//	public long getId() {
+//	    return id < 0 ? -1 : id;
+//	}
+	
 	public Customer getCustomer() {
 		return customer;
 	}
@@ -42,17 +45,15 @@ public class Reservation {
 	public BigDecimal getTotalCost() {
 		return totalCost;
 	}
-	
-	public Room[] getRooms() {
-        return rooms.clone();
+	public List<Room> getRooms() {
+        return List.copyOf(rooms);
     }
-
-    public void setRooms(Room[] rooms) {
+    public void setRooms(List<Room> rooms) {
         this.rooms = rooms;
     }
 
     @Override
 	public String toString() {
-	    return customer.getFirstName()+" "+customer.getLastName()+" "+startDate+" "+endDate;
+	    return customer.getFirstName()+" "+customer.getLastName()+" "+startDate+" "+endDate+" "+rooms;
 	}
 }
