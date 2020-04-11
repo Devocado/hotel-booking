@@ -11,6 +11,7 @@ import java.util.concurrent.TimeUnit;
 import persistence.DataSource;
 import types.Customer;
 import types.Reservation;
+import types.Room;
 
 public class Main {
 	
@@ -18,44 +19,45 @@ public class Main {
 	private static final Scanner sc = new Scanner(System.in);
 //	private static final Console cons = System.console();
 	private static Customer cust;
+	private static List<Room> rooms;
 	
 	private static ResourceBundle resource = ResourceBundle.getBundle("messages");
 
 	public static void main(String[] args) {
 		
 		dataSource = loadDataSource();
-		
-		clearScreen(0);
-		loginMenu();
-		
-		boolean hasExited = false;
-        
-        while (!hasExited && cust != null) {
-            
-            clearScreen(0);
-            System.out.print(resource.getString("mainMenu"));
-            //System.out.print("Please select an option\n1 - Reservations\n2 - Manage account\n0 - Exit\n>>>");
-            if (sc.hasNextInt()) {
-                switch (Integer.parseInt(sc.nextLine())) {
-                    case 0:
-                        System.out.println("Goodbye!");
-                        hasExited = true;
-                        break;
-                    case 1:
-                        System.out.println("Sorry, that has not been implemented yet");
-                        clearScreen(2);
-                        break;
-                    case 2:
-                        clearScreen(0);
-                        accountMenu();
-                        break;
-                    default:
-                }
-            }
-            else {
-                sc.nextLine();
-            }
-        }
+		rooms = dataSource.getRooms();
+//		clearScreen(0);
+//		loginMenu();
+//		
+//		boolean hasExited = false;
+//        
+//        while (!hasExited && cust != null) {
+//            
+//            clearScreen(0);
+//            System.out.print(resource.getString("mainMenu"));
+//            //System.out.print("Please select an option\n1 - Reservations\n2 - Manage account\n0 - Exit\n>>>");
+//            if (sc.hasNextInt()) {
+//                switch (Integer.parseInt(sc.nextLine())) {
+//                    case 0:
+//                        System.out.println("Goodbye!");
+//                        hasExited = true;
+//                        break;
+//                    case 1:
+//                        System.out.println("Sorry, that has not been implemented yet");
+//                        clearScreen(2);
+//                        break;
+//                    case 2:
+//                        clearScreen(0);
+//                        accountMenu();
+//                        break;
+//                    default:
+//                }
+//            }
+//            else {
+//                sc.nextLine();
+//            }
+//        }
 //		System.out.println(cust);
 	}
 	
@@ -180,12 +182,26 @@ public class Main {
     }
     
     public static String getCustomerPassword() {
+        String password = null, confirmed = null;
         
-        
-        System.out.print(resource.getString("newPassword"));
-//        System.out.print("Please enter a new password for your account: >>>");
-        String password = sc.nextLine();
-        
+        boolean passwordIsValid = false;
+
+        while (!passwordIsValid) {
+            System.out.print(resource.getString("newPassword"));
+            password = sc.nextLine();
+            System.out.print(resource.getString("confirmPassword"));
+            confirmed = sc.nextLine();
+  
+            if (!password.equals(confirmed)) {
+                System.out.println(resource.getString("passwordMismatch"));
+            }
+            else if (password.length() < 3) {
+                System.out.println(resource.getString("shortPassword"));
+            }
+            else {
+                passwordIsValid = true;
+            }
+        }
         return password;
     }
 	
