@@ -4,6 +4,7 @@ import java.util.List;
 
 import types.Customer;
 import types.Reservation;
+import types.Room;
 
 public interface DataSource {
 	
@@ -20,5 +21,9 @@ public interface DataSource {
 	List<Reservation> fetchReservations(Customer customer);
 	boolean deleteReservation(Reservation reservation);
 	boolean updateReservation(Reservation oldReservation, Reservation newReservation);
+	
+	Room getRoom(int roomNumber);
+	List<Room> getRooms();
+	List<Room> getUnreservedRooms();
 
 }
