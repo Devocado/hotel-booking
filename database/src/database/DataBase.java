@@ -8,6 +8,8 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -17,27 +19,41 @@ import types.Customer;
 import types.Reservation;
 import types.Room;
 
+@SuppressWarnings("unused")
 public class DataBase implements DataSource {
 	
 	private static final String DATABASE_PROPERTIES =
 			"/home/jesse/Jesse/Java/EclipseProjects/HotelBooking/database/resources/database.properties";
 	private static final String DATABASE_URL = "jdbc:mysql://localhost:3306/hotel";
 	
+	
 	//customers table
 	private static final String CUSTOMER_TABLE = "customers";
+	private static final String CUST_ID = "customers.id";
 	private static final String FIRST_NAME = "f_name";
 	private static final String LAST_NAME = "l_name";
 	private static final String EMAIL = "email";
 	private static final String PASSWORD = "password";
 	private static final String PHONE = "phone";
 	
-	@SuppressWarnings("unused")
+	//reservations table
 	private static final String RESERVATION_TABLE = "reservations";
+	private static final String RES_ID = "reservations.id";
+	private static final String CUST_ID_FK = "reservations.customer_id";
+	private static final String START = "reservations.start_date";
+	private static final String END = "reservations.end_date";
 	
+	//rooms table
 	private static final String ROOM_TABLE = "rooms";
-	private static final String ROOM_ID = "id";
-	private static final String ROOM_PRICE = "price_per_night";
-	private static final String MAX_GUESTS = "max_guests";
+	private static final String ROOM_ID = "rooms.id";
+	private static final String ROOM_PRICE = "rooms.price_per_night";
+	private static final String MAX_GUESTS = "rooms.max_guests";
+	
+	//room_reservations table
+	private static final String ROOM_RES_TABLE = "room_reservations";
+	private static final String ROOM_RES_ID = "room_reservations.id";
+	private static final String ROOM_ID_FK = "room_reservations.room_id";
+	private static final String RES_ID_FK = "room_reservations.reservation_id";
 	
 	private Connection conn;
 	
@@ -57,30 +73,41 @@ public class DataBase implements DataSource {
 	}
 
 	@Override
-	public boolean addCustomer(Customer customer, String password) {
+	public Customer addCustomer(String firstName, String lastName, String email, String phone, String password) {
 	    final String INSERT_CUST = "INSERT INTO "+CUSTOMER_TABLE+" ("+FIRST_NAME+", "+LAST_NAME+", "+EMAIL+
 	            ", "+PASSWORD+", "+PHONE+")"+ " VALUES(?, ?, ?, ?, ?)";
 	    
 	    boolean insertSucceeded = false;
+	    Customer cust = null;
+	    long id;
 	    
-	    try (PreparedStatement pStmt = conn.prepareStatement(INSERT_CUST)) {
-	        pStmt.setString(1, customer.getFirstName());
-	        pStmt.setString(2, customer.getLastName());
-	        pStmt.setString(3, customer.getEmail());
+	    try (PreparedStatement pStmt = conn.prepareStatement(INSERT_CUST, Statement.RETURN_GENERATED_KEYS)) {
+	        pStmt.setString(1, firstName);
+	        pStmt.setString(2, lastName);
+	        pStmt.setString(3, email);
 	        pStmt.setString(4, password);
-	        pStmt.setString(5, customer.getPhone());
+	        pStmt.setString(5, phone);
 	        
 	        insertSucceeded = pStmt.executeUpdate() == 1;
+	        
+	        ResultSet rs = pStmt.getGeneratedKeys();
+	        
+	        if (insertSucceeded && rs.first()) {
+	            id = rs.getLong(1);
+	            cust = new Customer(id, firstName, lastName, email, phone);
+	        }
 	        
 	    } catch (SQLException sqle) {
 	        System.err.println(sqle.getMessage());
 	    }
-		return insertSucceeded;
+		return cust;
 	}
 
 	@Override
 	public Customer fetchCustomer(String email) {
-	    final String GET_CUST = "SELECT "+FIRST_NAME+", "+LAST_NAME+", "+PHONE+" FROM "+CUSTOMER_TABLE+" WHERE "+EMAIL+"= ?";
+//	    final String GET_CUST = "SELECT "+CUST_ID+", "+FIRST_NAME+", "+LAST_NAME+", "+PHONE+" FROM "+CUSTOMER_TABLE+" WHERE "+EMAIL+"= ?";
+	    final String GET_CUST = String.format("SELECT %s, %s, %s, %s FROM %s where email= ?", 
+	            CUST_ID, FIRST_NAME, LAST_NAME, PHONE, CUSTOMER_TABLE);
 	    
 	    Customer cust = null;
 	    
@@ -88,7 +115,8 @@ public class DataBase implements DataSource {
 		    pStmt.setString(1, email);
 		    ResultSet rs = pStmt.executeQuery();
 		    if (rs.first() ) {
-		        cust = new Customer(rs.getString(1), rs.getString(2), email, rs.getString(3));
+		        cust = new Customer(rs.getLong(CUST_ID), rs.getString(FIRST_NAME), rs.getString(LAST_NAME), 
+		                email, rs.getString(PHONE));
 		    }
 		    
 		} catch (SQLException sqle) {
@@ -98,7 +126,7 @@ public class DataBase implements DataSource {
 	}
 	
 	@Override
-	public boolean updateCustomer(Customer oldCust, Customer newCust) { 
+	public boolean updateCustomer(Customer cust) { 
 	    
 	    final String UPDATE_CUST = "UPDATE "+CUSTOMER_TABLE+" SET "+FIRST_NAME+"= ?, "+
 	            LAST_NAME+"= ?, "+EMAIL+"= ?, "+PHONE+"= ?  WHERE "+EMAIL+"= ?";
@@ -107,11 +135,11 @@ public class DataBase implements DataSource {
 	    
 	    try (PreparedStatement pStmt = conn.prepareStatement(UPDATE_CUST)) {
 	        
-	        pStmt.setString(1, newCust.getFirstName());
-	        pStmt.setString(2, newCust.getLastName());
-	        pStmt.setString(3, newCust.getEmail());
-	        pStmt.setString(4, newCust.getPhone());
-	        pStmt.setString(5, oldCust.getEmail());
+	        pStmt.setString(1, cust.getFirstName());
+	        pStmt.setString(2, cust.getLastName());
+	        pStmt.setString(3, cust.getEmail());
+	        pStmt.setString(4, cust.getPhone());
+	        pStmt.setString(5, cust.getEmail());
 	        
 	        updateSucceeded = pStmt.executeUpdate() == 1;
 	        
@@ -187,7 +215,17 @@ public class DataBase implements DataSource {
 	}
 
 	@Override
-	public boolean saveReservation(Reservation reservation) {
+	public boolean saveReservation(Reservation res) {
+	    final String INSERT_RES = String.format("INSERT INTO %s (%s, %s, %s) VALUES (?, ?, ?)", 
+	            RESERVATION_TABLE, CUST_ID_FK, START, END);
+	    
+	    try(PreparedStatement pStmt = conn.prepareStatement(INSERT_RES)) {
+	        
+	        pStmt.setLong(1, res.getCustomer().getId());
+	    } catch (SQLException e) {
+            e.printStackTrace();
+        }
+	    
 		throw new UnsupportedOperationException("Not implemented"); 
 	}
 
@@ -198,6 +236,8 @@ public class DataBase implements DataSource {
 	
 	@Override
     public List<Reservation> fetchReservations(Customer customer) {
+	    final String GET_CUST_RES = "SELECT ";
+	    
 	    throw new UnsupportedOperationException("Not implemented");
 	}
 
@@ -251,8 +291,30 @@ public class DataBase implements DataSource {
     }
     
     @Override
-    public List<Room> getUnreservedRooms() {
-        return null;
+    public List<Room> getUnreservedRooms(LocalDate start, LocalDate end) {
+        List<Room> rooms = new ArrayList<>();
+        
+        final String UNRES_ROOMS = "SELECT "+ROOM_PRICE+", "+MAX_GUESTS+", "+ROOM_ID+" FROM "+ROOM_TABLE
+                + " LEFT JOIN "+ROOM_RES_TABLE+" ON "+ROOM_ID+" = "+ROOM_ID_FK
+                + " LEFT JOIN "+RESERVATION_TABLE+" ON "+RES_ID_FK+" = "+RES_ID
+                + " WHERE "+END+" < ? OR "+START+" > ?"
+                + " OR "+START+" IS NULL";
+        
+        try (PreparedStatement pStmt = conn.prepareStatement(UNRES_ROOMS)) {
+            pStmt.setDate(1, java.sql.Date.valueOf(start));
+            pStmt.setDate(2, java.sql.Date.valueOf(end));
+            
+            ResultSet rs = pStmt.executeQuery();
+            
+            while (rs.next()) {
+                rooms.add(new Room(rs.getInt(ROOM_ID), rs.getBigDecimal(ROOM_PRICE), rs.getInt(MAX_GUESTS)));
+            }
+            
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        
+        return rooms;
     }
     
 }

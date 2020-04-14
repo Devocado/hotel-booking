@@ -1,5 +1,6 @@
 package main;
 
+import java.util.ArrayList;
 //import java.io.Console;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -13,6 +14,7 @@ import types.Customer;
 import types.Reservation;
 import types.Room;
 
+@SuppressWarnings("unused")
 public class Main {
 	
 	private static DataSource dataSource;
@@ -26,39 +28,38 @@ public class Main {
 	public static void main(String[] args) {
 		
 		dataSource = loadDataSource();
-		rooms = dataSource.getRooms();
-//		clearScreen(0);
-//		loginMenu();
-//		
-//		boolean hasExited = false;
-//        
-//        while (!hasExited && cust != null) {
-//            
-//            clearScreen(0);
-//            System.out.print(resource.getString("mainMenu"));
-//            //System.out.print("Please select an option\n1 - Reservations\n2 - Manage account\n0 - Exit\n>>>");
-//            if (sc.hasNextInt()) {
-//                switch (Integer.parseInt(sc.nextLine())) {
-//                    case 0:
-//                        System.out.println("Goodbye!");
-//                        hasExited = true;
-//                        break;
-//                    case 1:
-//                        System.out.println("Sorry, that has not been implemented yet");
-//                        clearScreen(2);
-//                        break;
-//                    case 2:
-//                        clearScreen(0);
-//                        accountMenu();
-//                        break;
-//                    default:
-//                }
-//            }
-//            else {
-//                sc.nextLine();
-//            }
-//        }
-//		System.out.println(cust);
+		
+		clearScreen(0);
+		loginMenu();
+		
+		boolean hasExited = false;
+        
+        while (!hasExited && cust != null) {
+            
+            clearScreen(0);
+            System.out.print(resource.getString("mainMenu"));
+            //System.out.print("Please select an option\n1 - Reservations\n2 - Manage account\n0 - Exit\n>>>");
+            if (sc.hasNextInt()) {
+                switch (Integer.parseInt(sc.nextLine())) {
+                    case 0:
+                        System.out.println("Goodbye!");
+                        hasExited = true;
+                        break;
+                    case 1:
+                        reservationMenu();
+                        break;
+                    case 2:
+                        clearScreen(0);
+                        accountMenu();
+                        break;
+                    default:
+                }
+            }
+            else {
+                sc.nextLine();
+            }
+        }
+		System.out.println(cust);
 	}
 	
 	public static void accountMenu() {
@@ -67,8 +68,6 @@ public class Main {
         while (!hasExited) {
             clearScreen(0);
             System.out.print(resource.getString("accountMenu"));
-//            System.out.print("Please select an option\n1 - Update details\n2 - Change password\n"
-//                    + "3 - Delete account\n0 - Exit\n>>>");
             if (sc.hasNextInt()) {
                 switch (Integer.parseInt(sc.nextLine())) {
                     case 0:
@@ -77,11 +76,10 @@ public class Main {
                         break;
                     case 1:
                         clearScreen(0);
-                        cust = updateCustomer();
+                        updateCustomer();
                         break;
                     case 2:
                         clearScreen(0);
-//                        System.out.println(updatePassword());
                         updatePassword();
                         clearScreen(3);
                         break;
@@ -108,8 +106,6 @@ public class Main {
 	        
 	        clearScreen(0);
 	        System.out.print(resource.getString("reservationMenu"));
-//            System.out.print("Please select an option\n1 - Make a reservation\n"
-//                    + "2 - Remove a reservation\n3 - View reservations\n0 - Exit\n>>>");
             if (sc.hasNextInt()) {
                 switch (Integer.parseInt(sc.nextLine())) {
                     case 0:
@@ -117,14 +113,14 @@ public class Main {
                         clearScreen(3);
                         break;
                     case 1:
-                        cust = loginCustomer();
+                        createReservation();
                         clearScreen(3);
                         break;
                     case 2:
-                        //cust = createCustomer();
+                        deleteReservation();
                         break;
                     case 3:
-                        reservations.forEach(System.out::println);
+                        printReservations(cust);
                         break;
                     default:
                 }
@@ -135,16 +131,28 @@ public class Main {
         }
 	}
 	
+	public static boolean createReservation() {
+	    return true;
+	}
+	
+	public static boolean deleteReservation() {
+	    return true;
+	}
+	
+	public static void printReservations(Customer cust) {
+	    List<Reservation> reservations = dataSource.fetchReservations(cust);
+	    reservations.forEach(System.out::println);
+	}
+	
+	
 	public static boolean updatePassword() {
 	    boolean updateSucceeded = false;
-	    
-//	    System.out.print("Please enter your current password: \n>>>");
+
 	    System.out.print(resource.getString("oldPassword"));
         String oldPassword = sc.nextLine();
         
         if (validateCustomer(cust.getEmail(), oldPassword) ) {
         
-//            System.out.print("Please enter your new password: \n>>>");
             System.out.print(resource.getString("newPassword"));
             String newPassword = sc.nextLine();
             
@@ -152,34 +160,50 @@ public class Main {
         } 
         else {
             System.out.print(resource.getString("wrongPassword"));
-//            System.out.println("You entered your current password incorrectly");
         }
         
         return updateSucceeded;
     }
 	
-	public static Customer getCustomerInfo() {
-//        System.out.println("Please enter your details:");
-	    System.out.print(resource.getString("details"));
-//        System.out.print("First name: >>>");
-        System.out.print(resource.getString("firstName"));
-	    String firstName = sc.nextLine();
-	    
-//        System.out.print("Last name: >>>");
-        System.out.print(resource.getString("lastName"));
-	    String lastName = sc.nextLine();
-	    
-//        System.out.print("Email address: >>>");
-        System.out.print(resource.getString("email"));
-	    String email = sc.nextLine();
-	    
-//        System.out.print("Phone number, or hit enter: >>>");
-        System.out.print(resource.getString("phone"));
-	    String phone = sc.nextLine();
-        phone = phone.equals("") ? null : phone;  
-        
-        return new Customer(firstName, lastName, email, phone); 
-    }
+//	public static Customer getCustomerInfo() {
+//	    System.out.print(resource.getString("details"));
+//        System.out.print(resource.getString("firstName"));
+//	    String firstName = sc.nextLine();
+//	    
+//        System.out.print(resource.getString("lastName"));
+//	    String lastName = sc.nextLine();
+//	    
+//        System.out.print(resource.getString("email"));
+//	    String email = sc.nextLine();
+//	    
+//        System.out.print(resource.getString("phone"));
+//	    String phone = sc.nextLine();
+//        phone = phone.equals("") ? null : phone;  
+//        
+//        return new Customer(firstName, lastName, email, phone); 
+//    }
+
+	public static Customer createCustomer() {
+
+      System.out.print(resource.getString("details"));
+
+      System.out.print(resource.getString("firstName"));
+      String firstName = sc.nextLine();
+      
+      System.out.print(resource.getString("lastName"));
+      String lastName = sc.nextLine();
+      
+      System.out.print(resource.getString("email"));
+      String email = sc.nextLine();
+      
+      System.out.print(resource.getString("phone"));
+      String phone = sc.nextLine();
+      phone = phone.equals("") ? null : phone;
+      
+      String password = getCustomerPassword();
+      
+      return dataSource.addCustomer(firstName, lastName, email, phone, password);
+  }
     
     public static String getCustomerPassword() {
         String password = null, confirmed = null;
@@ -206,10 +230,8 @@ public class Main {
     }
 	
 	public static Customer loginCustomer() {
-//	    System.out.print("Please enter your email address:\n >>>");
         System.out.print(resource.getString("email"));
 	    String email = sc.nextLine();
-//        System.out.print("Please enter your account password:\n >>>");
         System.out.print(resource.getString("password"));
 	    String password = sc.nextLine();
         
@@ -223,10 +245,24 @@ public class Main {
         }
 	}
 	
-	public static Customer updateCustomer() {
-        Customer updatedCust = getCustomerInfo();
-        dataSource.updateCustomer(cust, updatedCust);
-        return updatedCust;
+	public static boolean updateCustomer() {
+	    
+	    System.out.print(resource.getString("details"));
+
+        System.out.print(resource.getString("firstName"));
+        cust.setFirstName( sc.nextLine() );
+          
+        System.out.print(resource.getString("lastName"));
+        cust.setLastName( sc.nextLine() );
+          
+        System.out.print(resource.getString("email"));
+        cust.setEmail( sc.nextLine() );
+          
+        System.out.print(resource.getString("phone"));
+        String phone = sc.nextLine();
+        cust.setPhone(phone.equals("") ? null : phone);
+        
+        return dataSource.updateCustomer(cust);
     }
 	
 	public static void loginMenu() {
@@ -234,7 +270,6 @@ public class Main {
 	    
 	    while (!hasExited && cust == null) {
 	        System.out.print(resource.getString("loginMenu"));
-//	        System.out.print("Please select an option\n1 - Login\n2 - Sign up\n0 - Exit\n>>>");
 	        if (sc.hasNextInt()) {
 	            switch (Integer.parseInt(sc.nextLine())) {
 	                case 0:
@@ -246,9 +281,7 @@ public class Main {
 	                    clearScreen(3);
 	                    break;
 	                case 2:
-	                    cust = getCustomerInfo();
-	                    dataSource.addCustomer(cust, getCustomerPassword());
-	                    clearScreen(0);
+	                    cust = createCustomer();
 	                    break;
 	                default:
 	            }
