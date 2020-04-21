@@ -74,8 +74,10 @@ public class DataBase implements DataSource {
 
 	@Override
 	public Customer addCustomer(String firstName, String lastName, String email, String phone, String password) {
-	    final String INSERT_CUST = "INSERT INTO "+CUSTOMER_TABLE+" ("+FIRST_NAME+", "+LAST_NAME+", "+EMAIL+
-	            ", "+PASSWORD+", "+PHONE+")"+ " VALUES(?, ?, ?, ?, ?)";
+	    //final String INSERT_CUST = "INSERT INTO "+CUSTOMER_TABLE+" ("+FIRST_NAME+", "+LAST_NAME+", "+EMAIL+
+	      //      ", "+PASSWORD+", "+PHONE+")"+ " VALUES(?, ?, ?, ?, ?)";
+	    final String INSERT_CUST = String.format(" INSERT INTO %s (%s, %s, %s, %s, %s) VALUES (?, ?, ?, ?, ?)",
+	            CUSTOMER_TABLE, FIRST_NAME, LAST_NAME, EMAIL, PASSWORD, PHONE);
 	    
 	    boolean insertSucceeded = false;
 	    Customer cust = null;
@@ -105,7 +107,6 @@ public class DataBase implements DataSource {
 
 	@Override
 	public Customer fetchCustomer(String email) {
-//	    final String GET_CUST = "SELECT "+CUST_ID+", "+FIRST_NAME+", "+LAST_NAME+", "+PHONE+" FROM "+CUSTOMER_TABLE+" WHERE "+EMAIL+"= ?";
 	    final String GET_CUST = String.format("SELECT %s, %s, %s, %s FROM %s where email= ?", 
 	            CUST_ID, FIRST_NAME, LAST_NAME, PHONE, CUSTOMER_TABLE);
 	    
@@ -215,13 +216,17 @@ public class DataBase implements DataSource {
 	}
 
 	@Override
-	public boolean saveReservation(Reservation res) {
+	public Reservation saveReservation(long custId, LocalDate start, LocalDate end) {
 	    final String INSERT_RES = String.format("INSERT INTO %s (%s, %s, %s) VALUES (?, ?, ?)", 
 	            RESERVATION_TABLE, CUST_ID_FK, START, END);
 	    
 	    try(PreparedStatement pStmt = conn.prepareStatement(INSERT_RES)) {
+	        conn.setAutoCommit(false);
+	        pStmt.setLong(1, custId);
+	        pStmt.setDate(2, java.sql.Date.valueOf(start));
+	        pStmt.setDate(3, java.sql.Date.valueOf(end));
 	        
-	        pStmt.setLong(1, res.getCustomer().getId());
+	        System.out.println(pStmt);
 	    } catch (SQLException e) {
             e.printStackTrace();
         }

@@ -17,7 +17,7 @@ public interface DataSource {
 	boolean updateCustomerPassword(Customer cust, String newPassword);
 	
 	
-	boolean saveReservation(Reservation reservation);
+	Reservation saveReservation(long custId, LocalDate start, LocalDate end);
 	Reservation fetchReservation(int id);
 	List<Reservation> fetchReservations(Customer customer);
 	boolean deleteReservation(Reservation reservation);

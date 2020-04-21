@@ -1,6 +1,7 @@
 package main;
 
-import java.util.ArrayList;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 //import java.io.Console;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -8,6 +9,7 @@ import java.util.ResourceBundle;
 import java.util.Scanner;
 import java.util.ServiceLoader;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
 import persistence.DataSource;
 import types.Customer;
@@ -99,10 +101,10 @@ public class Main {
 	}
 	
 	public static void reservationMenu() {
-	    List<Reservation> reservations = dataSource.fetchReservations(cust);
+	    //List<Reservation> reservations = dataSource.fetchReservations(cust);
 	    
 	    boolean hasExited = false;
-	    while (!hasExited && cust == null) {
+	    while (!hasExited) {
 	        
 	        clearScreen(0);
 	        System.out.print(resource.getString("reservationMenu"));
@@ -131,8 +133,28 @@ public class Main {
         }
 	}
 	
-	public static boolean createReservation() {
-	    return true;
+	public static Reservation createReservation() {
+	    LocalDate start = null, end = null;
+	    boolean isValid = false;
+	    
+	    while (!isValid) {
+
+            System.out.print(resource.getString("startDate"));
+            String startInput = sc.nextLine();
+            System.out.print(resource.getString("endDate"));
+            String endInput = sc.nextLine();
+            
+            try {
+                start = LocalDate.parse(startInput);
+                end = LocalDate.parse(endInput);
+                
+                if (start.isAfter(LocalDate.now()) && end.isAfter(start)) {
+                    isValid = true;
+                }
+            } catch (DateTimeParseException e) {}
+	    }
+        
+	    return dataSource.saveReservation(cust.getId(), start, end);
 	}
 	
 	public static boolean deleteReservation() {

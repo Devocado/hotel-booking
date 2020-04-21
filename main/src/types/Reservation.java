@@ -1,14 +1,14 @@
 package types;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 
 public class Reservation {
     
     private final long id = -1;
 	private Customer customer;
-	private LocalDateTime startDate, endDate;
+	private LocalDate startDate, endDate;
 	private BigDecimal totalCost;
 	private List<Room> rooms;
 	
@@ -19,14 +19,14 @@ public class Reservation {
 //		this.rooms = Arrays.asList(rooms);
 //	}
 	
-	public Reservation(int id, Customer cust, LocalDateTime start, LocalDateTime end, List<Room> rooms) {
+	public Reservation(int id, Customer cust, LocalDate start, LocalDate end, List<Room> rooms) {
         this.customer = cust;
         this.startDate = start;
         this.endDate = end;
         this.rooms = rooms;
     }
 	
-	public Reservation(Customer cust, LocalDateTime start, LocalDateTime end, List<Room> rooms) {
+	public Reservation(Customer cust, LocalDate start, LocalDate end, List<Room> rooms) {
 	    this(-1, cust, start, end, rooms);
 	}
 	
@@ -39,16 +39,16 @@ public class Reservation {
 	public void setCustomer(Customer customer) {
 		this.customer = customer;
 	}
-	public LocalDateTime getStart() {
+	public LocalDate getStart() {
 		return startDate;
 	}
-	public void setStart(LocalDateTime start) {
+	public void setStart(LocalDate start) {
 		this.startDate = start;
 	}
-	public LocalDateTime getEnd() {
+	public LocalDate getEnd() {
 		return endDate;
 	}
-	public void setEnd(LocalDateTime end) {
+	public void setEnd(LocalDate end) {
 		this.endDate = end;
 	}
 	public BigDecimal getTotalCost() {
