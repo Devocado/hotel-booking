@@ -23,7 +23,7 @@ import types.Room;
 public class DataBase implements DataSource {
 	
 	private static final String DATABASE_PROPERTIES =
-			"/home/jesse/Jesse/Java/EclipseProjects/HotelBooking/database/resources/database.properties";
+			"/home/jesse/Jesse/Java/LongTermProjects/Hotel/database/resources/database.properties";
 	private static final String DATABASE_URL = "jdbc:mysql://localhost:3306/hotel";
 	
 	

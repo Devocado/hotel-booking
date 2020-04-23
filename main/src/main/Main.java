@@ -319,8 +319,10 @@ public class Main {
     }
 
 	public static DataSource loadDataSource() {
-        return ServiceLoader.load(DataSource.class).findFirst()
-                .orElseThrow(() -> new NoSuchElementException(resource.getString("noDatasourceErr")));
+//        return ServiceLoader.load(DataSource.class).findFirst()
+//                .orElseThrow(() -> new NoSuchElementException(resource.getString("noDatasourceErr")));
+	    
+	    return new database.DataBase();
     }
 	
 	public static void clearScreen(int secondsDelay) {
