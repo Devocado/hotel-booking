@@ -5,6 +5,6 @@ The idea is that a customer can create, view, update and delete reservations at 
 
 The information is saved to a MySQL database, currently like the following diagram:
 
-![Imgur](https://imgur.com/P9E0Hic)
+![database schema](https://imgur.com/o7ucwGI.png)
 
 This is just a small demo for now, to be converted to a web interface later.
