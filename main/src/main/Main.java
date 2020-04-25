@@ -2,14 +2,14 @@ package main;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 //import java.io.Console;
 import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.Scanner;
-import java.util.ServiceLoader;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import persistence.DataSource;
 import types.Customer;
@@ -31,14 +31,14 @@ public class Main {
 		
 		dataSource = loadDataSource();
 		
-		clearScreen(0);
+		//clearScreen(0);
 		loginMenu();
 		
 		boolean hasExited = false;
         
         while (!hasExited && cust != null) {
             
-            clearScreen(0);
+//            clearScreen(0);
             System.out.print(resource.getString("mainMenu"));
             //System.out.print("Please select an option\n1 - Reservations\n2 - Manage account\n0 - Exit\n>>>");
             if (sc.hasNextInt()) {
@@ -51,7 +51,7 @@ public class Main {
                         reservationMenu();
                         break;
                     case 2:
-                        clearScreen(0);
+                        //clearScreen(0);
                         accountMenu();
                         break;
                     default:
@@ -62,31 +62,33 @@ public class Main {
             }
         }
 		System.out.println(cust);
+		
+//		System.out.println(dataSource.getUnreservedRooms(LocalDate.parse("2020-07-01"), LocalDate.parse("2020-07-05")));
 	}
 	
 	public static void accountMenu() {
         
         boolean hasExited = false;
         while (!hasExited) {
-            clearScreen(0);
+            //clearScreen(0);
             System.out.print(resource.getString("accountMenu"));
             if (sc.hasNextInt()) {
                 switch (Integer.parseInt(sc.nextLine())) {
                     case 0:
                         hasExited = true;
-                        clearScreen(0);
+//                        clearScreen(0);
                         break;
                     case 1:
-                        clearScreen(0);
+//                        clearScreen(0);
                         updateCustomer();
                         break;
                     case 2:
-                        clearScreen(0);
+//                        clearScreen(0);
                         updatePassword();
-                        clearScreen(3);
+//                        clearScreen(3);
                         break;
                     case 3:
-                        clearScreen(0);
+//                        clearScreen(0);
                         dataSource.deleteCustomer(cust);
                         cust = null;
                         hasExited = true;
@@ -106,17 +108,17 @@ public class Main {
 	    boolean hasExited = false;
 	    while (!hasExited) {
 	        
-	        clearScreen(0);
+//	        clearScreen(0);
 	        System.out.print(resource.getString("reservationMenu"));
             if (sc.hasNextInt()) {
                 switch (Integer.parseInt(sc.nextLine())) {
                     case 0:
                         hasExited = true;
-                        clearScreen(3);
+                        //clearScreen(3);
                         break;
                     case 1:
                         createReservation();
-                        clearScreen(3);
+                        //clearScreen(3);
                         break;
                     case 2:
                         deleteReservation();
@@ -135,6 +137,7 @@ public class Main {
 	
 	public static Reservation createReservation() {
 	    LocalDate start = null, end = null;
+	    int numGuests = 0;
 	    boolean isValid = false;
 	    
 	    while (!isValid) {
@@ -143,18 +146,76 @@ public class Main {
             String startInput = sc.nextLine();
             System.out.print(resource.getString("endDate"));
             String endInput = sc.nextLine();
+            System.out.print(resource.getString("numGuests"));
+            
+            if (sc.hasNextInt()) {
+                numGuests = sc.nextInt();
+                sc.nextLine();
+            }
             
             try {
                 start = LocalDate.parse(startInput);
                 end = LocalDate.parse(endInput);
                 
-                if (start.isAfter(LocalDate.now()) && end.isAfter(start)) {
+                if (start.isAfter(LocalDate.now()) && end.isAfter(start) && numGuests > 0) {
                     isValid = true;
                 }
             } catch (DateTimeParseException e) {}
 	    }
+	    
+	    Map<Integer, Room> availableRooms = dataSource.getUnreservedRooms(start, end);
+	    int availableCapacity = availableRooms.values().stream().mapToInt(Room::getMaxGuests).sum();
+        if (availableCapacity < numGuests) {
+            System.out.println(resource.getString("roomsNotAvailable"));
+            return null;
+        }
+	    
+	    List<Room> rooms = chooseRooms(availableRooms, numGuests);
         
-	    return dataSource.saveReservation(cust.getId(), start, end);
+	    return dataSource.saveReservation(cust, start, end, rooms);
+	}
+	
+	public static List<Room> chooseRooms(Map<Integer, Room> availableRooms, int guests) { 
+	    
+	    List<Room> chosenRooms = new ArrayList<>();
+	    System.out.println(resource.getString("roomMenu"));
+	    availableRooms.values().stream()
+        .forEach(r -> System.out.format("Room %d: %.2f/night, sleeps %d%n",
+                    r.getRoomNumber(), r.getPricePerNight(), r.getMaxGuests()));
+	    
+	    boolean hasExited = false;
+	    while (!hasExited) {
+	        System.out.println(">>>");
+	        if (sc.hasNextInt()) {
+	            int roomNum = sc.nextInt();
+	            sc.nextLine();
+	            
+	            if (!availableRooms.containsKey(roomNum)) {
+	                System.out.println(resource.getString("incorrectRoomNumber"));
+	                continue;
+	            }
+	            
+	            if (chosenRooms.contains(availableRooms.get(roomNum))) {
+	                chosenRooms.remove(availableRooms.get(roomNum));
+	            }
+	            else {
+	                chosenRooms.add(availableRooms.get(roomNum));
+	            }           
+	        }
+	        
+	        System.out.print(resource.getString("roomsChosen")+": ");
+	        chosenRooms.stream().map(Room::getRoomNumber).forEach(i -> System.out.println(i + ", "));
+	        
+	        int chosenRoomsCap = chosenRooms.stream().mapToInt(Room::getMaxGuests).sum();
+	        if (chosenRoomsCap >= guests) {
+	            System.out.println(resource.getString("enoughRooms"));
+	            if(sc.nextLine().equalsIgnoreCase("y")) {
+	                hasExited = true;
+	            }
+	        }
+	    }
+	    
+	    return chosenRooms;
 	}
 	
 	public static boolean deleteReservation() {
@@ -186,24 +247,6 @@ public class Main {
         
         return updateSucceeded;
     }
-	
-//	public static Customer getCustomerInfo() {
-//	    System.out.print(resource.getString("details"));
-//        System.out.print(resource.getString("firstName"));
-//	    String firstName = sc.nextLine();
-//	    
-//        System.out.print(resource.getString("lastName"));
-//	    String lastName = sc.nextLine();
-//	    
-//        System.out.print(resource.getString("email"));
-//	    String email = sc.nextLine();
-//	    
-//        System.out.print(resource.getString("phone"));
-//	    String phone = sc.nextLine();
-//        phone = phone.equals("") ? null : phone;  
-//        
-//        return new Customer(firstName, lastName, email, phone); 
-//    }
 
 	public static Customer createCustomer() {
 
@@ -300,7 +343,7 @@ public class Main {
 	                    break;
 	                case 1:
 	                    cust = loginCustomer();
-	                    clearScreen(3);
+//	                    clearScreen(3);
 	                    break;
 	                case 2:
 	                    cust = createCustomer();

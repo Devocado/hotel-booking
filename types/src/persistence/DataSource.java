@@ -2,6 +2,7 @@ package persistence;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 import types.Customer;
 import types.Reservation;
@@ -17,14 +18,14 @@ public interface DataSource {
 	boolean updateCustomerPassword(Customer cust, String newPassword);
 	
 	
-	Reservation saveReservation(long custId, LocalDate start, LocalDate end);
+	Reservation saveReservation(Customer cust, LocalDate start, LocalDate end, List<Room> rooms);
 	Reservation fetchReservation(int id);
 	List<Reservation> fetchReservations(Customer customer);
 	boolean deleteReservation(Reservation reservation);
 	boolean updateReservation(Reservation oldReservation, Reservation newReservation);
 	
 	Room getRoom(int roomNumber);
-	List<Room> getRooms();
-	List<Room> getUnreservedRooms(LocalDate start, LocalDate end);
+	Map<Integer, Room> getRooms();
+	Map<Integer, Room> getUnreservedRooms(LocalDate start, LocalDate end);
 
 }
