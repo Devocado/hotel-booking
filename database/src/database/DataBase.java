@@ -32,23 +32,21 @@ public class DataBase implements DataSource {
 	//customers table
 	private static final String CUSTOMER_TABLE = "customers";
 	private static final String CUST_ID = "customers.id";
-	private static final String FIRST_NAME = "f_name";
-	private static final String LAST_NAME = "l_name";
-	private static final String EMAIL = "email";
-	private static final String PASSWORD = "password";
-	private static final String PHONE = "phone";
+	private static final String FIRST_NAME = "customers.f_name";
+	private static final String LAST_NAME = "customers.l_name";
+	private static final String EMAIL = "customers.email";
+	private static final String PASSWORD = "customers.password";
+	private static final String PHONE = "customers.phone";
 	
 	//reservations table
 	private static final String RESERVATION_TABLE = "reservations";
 	private static final String RES_ID = "reservations.id";
 	private static final String CUST_ID_FK = "reservations.customer_id";
-	private static final String START = "reservations.start_date";
-	private static final String END = "reservations.end_date";
 	
 	//rooms table
 	private static final String ROOM_TABLE = "rooms";
 	private static final String ROOM_ID = "rooms.id";
-	private static final String ROOM_PRICE = "rooms.price_per_night";
+	private static final String ROOM_PRICE = "rooms.night_price";
 	private static final String MAX_GUESTS = "rooms.max_guests";
 	
 	//room_reservations table
@@ -56,6 +54,8 @@ public class DataBase implements DataSource {
 	private static final String ROOM_RES_ID = "room_reservations.id";
 	private static final String ROOM_ID_FK = "room_reservations.room_id";
 	private static final String RES_ID_FK = "room_reservations.reservation_id";
+	private static final String START = "room_reservations.start_date";
+    private static final String END = "room_reservations.end_date";
 	
 	private Connection conn;
 	
@@ -219,41 +219,38 @@ public class DataBase implements DataSource {
 
 	@Override
 	public Reservation saveReservation(Customer cust, LocalDate start, LocalDate end, List<Room> rooms) {
-	    final String INSERT_RES = String.format("INSERT INTO %s (%s, %s, %s) VALUES (?, ?, ?)", 
-	            RESERVATION_TABLE, CUST_ID_FK, START, END);
-	    final String INSERT_ROOM_RES = String.format("INSERT INTO %s (%s, %s) values (?, ?)", 
-	            ROOM_RES_TABLE, ROOM_ID_FK, RES_ID_FK);
+//	    final String INSERT_RES = String.format("INSERT INTO %s (%s, %s, %s) VALUES (?, ?, ?)", 
+//	            RESERVATION_TABLE, CUST_ID_FK, START, END);
+	    final String INSERT_RES = String.format("INSERT INTO %s (%s) VALUES (?)", RESERVATION_TABLE, CUST_ID_FK);
 	    
-	    try(PreparedStatement pStmt = conn.prepareStatement(INSERT_RES, Statement.RETURN_GENERATED_KEYS); 
-	                PreparedStatement pStmt2 = conn.prepareStatement(INSERT_ROOM_RES)) {
+	    final String INSERT_ROOM_RES = String.format("INSERT INTO %s (%s, %s, %s, %s) values (?, ?, ?, ?)", 
+	            ROOM_RES_TABLE, ROOM_ID_FK, RES_ID_FK, START, END);
+	    
+	    try(PreparedStatement insrtRes = conn.prepareStatement(INSERT_RES, Statement.RETURN_GENERATED_KEYS); 
+	                PreparedStatement insrtRoomRes = conn.prepareStatement(INSERT_ROOM_RES)) {
 	        conn.setAutoCommit(false);
-	        pStmt.setLong(1, cust.getId());
-	        pStmt.setDate(2, java.sql.Date.valueOf(start));
-	        pStmt.setDate(3, java.sql.Date.valueOf(end));
 	        
-	        pStmt.executeUpdate();
+	        insrtRes.setLong(1, cust.getId());
+	        insrtRes.executeUpdate();
 	        
-	        ResultSet rs = pStmt.getGeneratedKeys();
-	        
-	        rs.next();
-	        long res_id = rs.getLong(1);
-//	        if (rs.first()) {
-//	            res_id = rs.getLong(1);
-//	        }
-//	        else {
-//	            conn.rollback();
-//	            throw new RuntimeException("No key returned for reservation insert!!");
-//	        }
-//	        conn.rollback();
-	        
+	        ResultSet rs = insrtRes.getGeneratedKeys();
+            
+            rs.next();
+            long res_id = rs.getLong(1);
+            
 	        for(Room room : rooms) {
-	            pStmt2.setInt(1, room.getRoomNumber());
-	            pStmt2.setLong(2, res_id);
-	            pStmt2.executeUpdate();
+	            insrtRoomRes.setInt(1, room.getRoomNumber());
+	            insrtRoomRes.setLong(2, res_id);
+	            insrtRoomRes.setDate(3, java.sql.Date.valueOf(start));
+	            insrtRoomRes.setDate(4, java.sql.Date.valueOf(end));
+	            insrtRoomRes.executeUpdate();
 	        }
+	        
+	        conn.commit();
 	        
 	    } catch (SQLException e) {
 	        try {
+	            System.out.println("Rolling back!");
 	            conn.rollback();
 	        } catch (SQLException sqle) {
 	            sqle.printStackTrace();
@@ -268,8 +265,6 @@ public class DataBase implements DataSource {
                 e.printStackTrace();
             }
         }
-	    
-//		throw new UnsupportedOperationException("Not implemented"); 
 	    
 	    return new Reservation(cust, start, end, rooms);
 	}
