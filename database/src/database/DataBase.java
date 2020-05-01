@@ -39,7 +39,7 @@ public class DataBase implements DataSource {
 	private static final String PHONE = "customers.phone";
 	
 	//reservations table
-	private static final String RESERVATION_TABLE = "reservations";
+	private static final String RES_TABLE = "reservations";
 	private static final String RES_ID = "reservations.id";
 	private static final String CUST_ID_FK = "reservations.customer_id";
 	
@@ -221,7 +221,7 @@ public class DataBase implements DataSource {
 	public Reservation saveReservation(Customer cust, LocalDate start, LocalDate end, List<Room> rooms) {
 //	    final String INSERT_RES = String.format("INSERT INTO %s (%s, %s, %s) VALUES (?, ?, ?)", 
 //	            RESERVATION_TABLE, CUST_ID_FK, START, END);
-	    final String INSERT_RES = String.format("INSERT INTO %s (%s) VALUES (?)", RESERVATION_TABLE, CUST_ID_FK);
+	    final String INSERT_RES = String.format("INSERT INTO %s (%s) VALUES (?)", RES_TABLE, CUST_ID_FK);
 	    
 	    final String INSERT_ROOM_RES = String.format("INSERT INTO %s (%s, %s, %s, %s) values (?, ?, ?, ?)", 
 	            ROOM_RES_TABLE, ROOM_ID_FK, RES_ID_FK, START, END);
@@ -239,7 +239,7 @@ public class DataBase implements DataSource {
             long res_id = rs.getLong(1);
             
 	        for(Room room : rooms) {
-	            insrtRoomRes.setInt(1, room.getRoomNumber());
+	            insrtRoomRes.setLong(1, room.getRoomNumber());
 	            insrtRoomRes.setLong(2, res_id);
 	            insrtRoomRes.setDate(3, java.sql.Date.valueOf(start));
 	            insrtRoomRes.setDate(4, java.sql.Date.valueOf(end));
@@ -247,6 +247,8 @@ public class DataBase implements DataSource {
 	        }
 	        
 	        conn.commit();
+	        
+	        return new Reservation(res_id, cust, start, end, rooms);
 	        
 	    } catch (SQLException e) {
 	        try {
@@ -257,6 +259,7 @@ public class DataBase implements DataSource {
 	        }
             e.printStackTrace();
             
+            return null;
         } finally {
             try {
                 conn.setAutoCommit(true);
@@ -265,8 +268,6 @@ public class DataBase implements DataSource {
                 e.printStackTrace();
             }
         }
-	    
-	    return new Reservation(cust, start, end, rooms);
 	}
 
 	@Override
@@ -276,10 +277,55 @@ public class DataBase implements DataSource {
 	
 	@Override
     public List<Reservation> fetchReservations(Customer customer) {
-	    final String GET_CUST_RES = "SELECT ";
+	    final String GET_CUST_RES = "SELECT DISTINCT "+RES_ID+", "+START+", "+END+" FROM "+RES_TABLE + 
+	            " RIGHT JOIN "+ROOM_RES_TABLE+" ON "+RES_ID+" = "+ RES_ID_FK + 
+	            " where "+CUST_ID_FK+" = ?;";
 	    
-	    throw new UnsupportedOperationException("Not implemented");
+	    List<Reservation> reservations = new ArrayList<>();
+	    
+	    try (PreparedStatement pStmt = conn.prepareStatement(GET_CUST_RES)) {
+	        
+	        pStmt.setLong(1, customer.getId());
+//	        System.out.println(pStmt);
+	        
+	        ResultSet rs = pStmt.executeQuery();
+	        
+	        while (rs.next()) {
+	            reservations.add(new Reservation(rs.getLong(RES_ID), customer, rs.getDate(START).toLocalDate(),
+	                    rs.getDate(END).toLocalDate(), null));
+	        }
+	        
+	        reservations.stream()
+	                .forEach(r -> r.setRooms(getReservationRooms(r)));
+	        
+	    } catch (SQLException sqle) {
+	        System.err.println(sqle);
+	    }
+	    
+	    return reservations;
 	}
+	
+	public List<Room> getReservationRooms(Reservation res) {
+        final String GET_ROOMS = "SELECT "+ROOM_ID+", "+MAX_GUESTS+", "+ROOM_PRICE+" from "+ROOM_RES_TABLE
+                + " inner join "+ROOM_TABLE+" on "+ROOM_ID_FK+" = "+ROOM_ID+" where "+RES_ID_FK+" = ?;";
+        
+        List<Room> rooms = new ArrayList<>();
+        
+        try (PreparedStatement pStmt = conn.prepareStatement(GET_ROOMS)) {
+            pStmt.setLong(1, res.getId());
+//            System.out.println(pStmt);
+            
+            ResultSet rs = pStmt.executeQuery();
+            
+            while (rs.next()) {
+                rooms.add(new Room(rs.getLong(ROOM_ID), rs.getBigDecimal(ROOM_PRICE), rs.getInt(MAX_GUESTS)));
+            } 
+        }
+        catch (SQLException e) {
+            System.err.println(e.getMessage());
+        }
+        return rooms;
+    }
 
     @Override
     public boolean deleteReservation(Reservation reservation) {
@@ -292,17 +338,17 @@ public class DataBase implements DataSource {
     }
 	
     @Override
-    public Room getRoom(int roomNumber) {
+    public Room getRoom(int roomId) {
         final String GET_ROOM = "SELECT "+ROOM_PRICE+", "+MAX_GUESTS+" FROM "+ROOM_TABLE+" WHERE "+ROOM_ID+"= ?";
         
         Room room = null;
         
         try (PreparedStatement pStmt = conn.prepareStatement(GET_ROOM)) {
-            pStmt.setInt(1, roomNumber);
+            pStmt.setInt(1, roomId);
             ResultSet rs = pStmt.executeQuery();
             
             if (rs.first()) {
-                room = new Room(roomNumber, rs.getBigDecimal(ROOM_PRICE), rs.getInt(MAX_GUESTS));
+                room = new Room(roomId, rs.getBigDecimal(ROOM_PRICE), rs.getInt(MAX_GUESTS));
             }
         }
         catch (SQLException e) {
@@ -334,22 +380,33 @@ public class DataBase implements DataSource {
     public Map<Integer, Room> getUnreservedRooms(LocalDate start, LocalDate end) {
         Map<Integer, Room> rooms = new HashMap<>();
         
-        final String UNRES_ROOMS = "SELECT "+ROOM_PRICE+", "+MAX_GUESTS+", "+ROOM_ID+" FROM "+ROOM_TABLE
-                + " LEFT JOIN "+ROOM_RES_TABLE+" ON "+ROOM_ID+" = "+ROOM_ID_FK
-                + " LEFT JOIN "+RESERVATION_TABLE+" ON "+RES_ID_FK+" = "+RES_ID
-                + " WHERE "+END+" < ? OR "+START+" > ?"
-                + " OR "+START+" IS NULL";
+        final String UNRES_ROOMS = "SELECT "+ROOM_ID+", "+ROOM_PRICE+", "+MAX_GUESTS+" FROM "+ROOM_TABLE
+                +" WHERE "+ROOM_ID+" NOT IN( "
+                        + "SELECT "+ROOM_ID+" FROM "+ROOM_TABLE
+                        + " INNER JOIN "+ROOM_RES_TABLE+" ON "+ROOM_ID+" = "+ ROOM_ID_FK
+                        + " WHERE "+START+" BETWEEN @start AND @end OR "+END+" BETWEEN @start AND @end "
+                                + "OR @start BETWEEN "+START+" AND "+END+")";
+        
+//        final String UNRES_ROOMS = "SELECT "+ROOM_PRICE+", "+MAX_GUESTS+", "+ROOM_ID+" FROM "+ROOM_TABLE
+//                + " LEFT JOIN "+ROOM_RES_TABLE+" ON "+ROOM_ID+" = "+ROOM_ID_FK
+//                + " LEFT JOIN "+RESERVATION_TABLE+" ON "+RES_ID_FK+" = "+RES_ID
+//                + " WHERE "+END+" < ? OR "+START+" > ?"
+//                + " OR "+START+" IS NULL";
         
         try (PreparedStatement pStmt = conn.prepareStatement(UNRES_ROOMS)) {
-            pStmt.setDate(1, java.sql.Date.valueOf(start));
-            pStmt.setDate(2, java.sql.Date.valueOf(end));
+            pStmt.executeUpdate("SET @start="+pStmt.enquoteLiteral(start.toString()));
+            pStmt.executeUpdate("SET @end="+pStmt.enquoteLiteral(end.toString()));
+            
+//            pStmt.setDate(1, java.sql.Date.valueOf(start));
+//            pStmt.setDate(2, java.sql.Date.valueOf(end));
             
             System.out.println(pStmt);
             
             ResultSet rs = pStmt.executeQuery();
             
             while (rs.next()) {
-                rooms.put(rs.getInt(ROOM_ID), new Room(rs.getInt(ROOM_ID), rs.getBigDecimal(ROOM_PRICE), rs.getInt(MAX_GUESTS)));
+                rooms.put(rs.getInt(ROOM_ID), new Room(rs.getInt(ROOM_ID), rs.getBigDecimal(ROOM_PRICE), 
+                        rs.getInt(MAX_GUESTS)));
             }
             
         } catch (SQLException e) {

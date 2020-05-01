@@ -6,7 +6,7 @@ import java.util.List;
 
 public class Reservation {
     
-    private final long id = -1;
+    private final long id;
 	private Customer customer;
 	private LocalDate startDate, endDate;
 	private BigDecimal totalCost;
@@ -19,16 +19,17 @@ public class Reservation {
 //		this.rooms = Arrays.asList(rooms);
 //	}
 	
-	public Reservation(int id, Customer cust, LocalDate start, LocalDate end, List<Room> rooms) {
+	public Reservation(long id, Customer cust, LocalDate start, LocalDate end, List<Room> rooms) {
+	    this.id = id;
         this.customer = cust;
         this.startDate = start;
         this.endDate = end;
         this.rooms = rooms;
     }
 	
-	public Reservation(Customer cust, LocalDate start, LocalDate end, List<Room> rooms) {
-	    this(-1, cust, start, end, rooms);
-	}
+//	public Reservation(Customer cust, LocalDate start, LocalDate end, List<Room> rooms) {
+//	    this(-1, cust, start, end, rooms);
+//	}
 	
 	public long getId() {
 	    return id;

@@ -24,7 +24,7 @@ public class Main {
 //	private static final Console cons = System.console();
 	private static Customer cust;
 	private static List<Room> rooms;
-	
+	private static List <Reservation> reservations;
 	private static ResourceBundle resource = ResourceBundle.getBundle("messages");
 
 	public static void main(String[] args) {
@@ -62,8 +62,8 @@ public class Main {
             }
         }
 		System.out.println(cust);
-		
-//		System.out.println(dataSource.getUnreservedRooms(LocalDate.parse("2020-07-01"), LocalDate.parse("2020-07-05")));
+		cust = new Customer(7, "Josephine", "Snow", "josnow@starmail.com", null);
+//		System.out.println(dataSource.fetchReservations(cust));
 	}
 	
 	public static void accountMenu() {
@@ -186,22 +186,26 @@ public class Main {
 	    boolean hasExited = false;
 	    while (!hasExited) {
 	        System.out.println(">>>");
-	        if (sc.hasNextInt()) {
-	            int roomNum = sc.nextInt();
+	        if (!sc.hasNextInt()) {
 	            sc.nextLine();
-	            
-	            if (!availableRooms.containsKey(roomNum)) {
-	                System.out.println(resource.getString("incorrectRoomNumber"));
-	                continue;
-	            }
-	            
-	            if (chosenRooms.contains(availableRooms.get(roomNum))) {
-	                chosenRooms.remove(availableRooms.get(roomNum));
-	            }
-	            else {
-	                chosenRooms.add(availableRooms.get(roomNum));
-	            }           
+	            System.out.println("incorrectRoomNumber");
+	            continue;
 	        }
+	            
+	        int roomNum = sc.nextInt();
+	        sc.nextLine();
+	        
+            if (!availableRooms.containsKey(roomNum)) {
+                System.out.println(resource.getString("incorrectRoomNumber"));
+                continue;
+            }
+            
+            if (chosenRooms.contains(availableRooms.get(roomNum))) {
+                chosenRooms.remove(availableRooms.get(roomNum));
+            }
+            else {
+                chosenRooms.add(availableRooms.get(roomNum));
+            }           
 	        
 	        System.out.print(resource.getString("roomsChosen")+": ");
 	        chosenRooms.stream().map(Room::getRoomNumber).forEach(i -> System.out.println(i + ", "));
@@ -343,6 +347,9 @@ public class Main {
 	                    break;
 	                case 1:
 	                    cust = loginCustomer();
+	                    if(cust != null) {
+	                        reservations = dataSource.fetchReservations(cust);
+	                    }
 //	                    clearScreen(3);
 	                    break;
 	                case 2:
