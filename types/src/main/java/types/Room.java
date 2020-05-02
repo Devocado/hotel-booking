@@ -4,13 +4,13 @@ import java.math.BigDecimal;
 
 public class Room {
     
-    private int roomNumber;
+    private long roomId;
     private BigDecimal pricePerNight;
     private int maxGuests;
 
     
-    public Room(int roomNumber, BigDecimal pricePerNight, int maxGuests) {
-        this.roomNumber = roomNumber;
+    public Room(long roomId, BigDecimal pricePerNight, int maxGuests) {
+        this.roomId = roomId;
         this.pricePerNight = pricePerNight;
         this.maxGuests = maxGuests;
     }
@@ -23,13 +23,13 @@ public class Room {
         return maxGuests;
     }
     
-    public int getRoomNumber() {
-        return roomNumber;
+    public long getRoomNumber() {
+        return roomId;
     }
     
     @Override
     public String toString() {
-        return String.format("%d %.2f %d", roomNumber, pricePerNight, maxGuests);
+        return String.format("%d %.2f %d", roomId, pricePerNight, maxGuests);
     }
 
 }
