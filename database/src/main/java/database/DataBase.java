@@ -1,33 +1,27 @@
 package database;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Date;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
 import persistence.DataSource;
 import types.Customer;
 import types.Reservation;
 import types.Room;
 
-@SuppressWarnings("unused")
 public class DataBase implements DataSource {
 	
-	private static final String DATABASE_PROPERTIES =
-			"/home/jesse/Jesse/Java/LongTermProjects/Hotel/database/resources/database.properties";
 	private static final String DATABASE_URL = "jdbc:mysql://localhost:3306/hotel";
-	
 	
 	//customers table
 	private static final String CUSTOMER_TABLE = "customers";
@@ -60,15 +54,8 @@ public class DataBase implements DataSource {
 	private Connection conn;
 	
 	public DataBase() {
-		Properties p = new Properties();
-		try (BufferedReader buff = new BufferedReader(new FileReader(DATABASE_PROPERTIES))) {
-			
-			p.load(buff);
-			conn = DriverManager.getConnection(DATABASE_URL, p);
-		} 
-		catch (IOException e) {
-			throw new RuntimeException("Missing database properties");
-			//e.printStackTrace();
+		try {
+			conn = DriverManager.getConnection(DATABASE_URL, "hotelapp", "password");
 		} catch (SQLException sqle) {
 			throw new RuntimeException("Could not connect to database");
 		}
@@ -76,14 +63,11 @@ public class DataBase implements DataSource {
 
 	@Override
 	public Customer addCustomer(String firstName, String lastName, String email, String phone, String password) {
-	    //final String INSERT_CUST = "INSERT INTO "+CUSTOMER_TABLE+" ("+FIRST_NAME+", "+LAST_NAME+", "+EMAIL+
-	      //      ", "+PASSWORD+", "+PHONE+")"+ " VALUES(?, ?, ?, ?, ?)";
-	    final String INSERT_CUST = String.format(" INSERT INTO %s (%s, %s, %s, %s, %s) VALUES (?, ?, ?, ?, ?)",
-	            CUSTOMER_TABLE, FIRST_NAME, LAST_NAME, EMAIL, PASSWORD, PHONE);
 	    
-	    boolean insertSucceeded = false;
+	    final String INSERT_CUST = " INSERT INTO "+CUSTOMER_TABLE
+	            + " ("+FIRST_NAME+", "+LAST_NAME+", "+EMAIL+", "+PASSWORD+", "+PHONE+") VALUES (?, ?, ?, ?, ?)";
+	    
 	    Customer cust = null;
-	    long id;
 	    
 	    try (PreparedStatement pStmt = conn.prepareStatement(INSERT_CUST, Statement.RETURN_GENERATED_KEYS)) {
 	        pStmt.setString(1, firstName);
@@ -92,13 +76,11 @@ public class DataBase implements DataSource {
 	        pStmt.setString(4, password);
 	        pStmt.setString(5, phone);
 	        
-	        insertSucceeded = pStmt.executeUpdate() == 1;
-	        
+	        boolean insertSucceeded = pStmt.executeUpdate() == 1;
 	        ResultSet rs = pStmt.getGeneratedKeys();
 	        
 	        if (insertSucceeded && rs.first()) {
-	            id = rs.getLong(1);
-	            cust = new Customer(id, firstName, lastName, email, phone);
+	            cust = new Customer(rs.getLong(1), firstName, lastName, email, phone);
 	        }
 	        
 	    } catch (SQLException sqle) {
@@ -109,14 +91,15 @@ public class DataBase implements DataSource {
 
 	@Override
 	public Customer fetchCustomer(String email) {
-	    final String GET_CUST = String.format("SELECT %s, %s, %s, %s FROM %s where email= ?", 
-	            CUST_ID, FIRST_NAME, LAST_NAME, PHONE, CUSTOMER_TABLE);
+	    final String GET_CUST = 
+	            "SELECT "+CUST_ID+", "+FIRST_NAME+", "+LAST_NAME+", "+PHONE+" FROM "+CUSTOMER_TABLE+" where email= ?";
 	    
 	    Customer cust = null;
 	    
 		try (PreparedStatement pStmt = conn.prepareStatement(GET_CUST)) {
 		    pStmt.setString(1, email);
 		    ResultSet rs = pStmt.executeQuery();
+		    
 		    if (rs.first() ) {
 		        cust = new Customer(rs.getLong(CUST_ID), rs.getString(FIRST_NAME), rs.getString(LAST_NAME), 
 		                email, rs.getString(PHONE));
@@ -131,8 +114,8 @@ public class DataBase implements DataSource {
 	@Override
 	public boolean updateCustomer(Customer cust) { 
 	    
-	    final String UPDATE_CUST = "UPDATE "+CUSTOMER_TABLE+" SET "+FIRST_NAME+"= ?, "+
-	            LAST_NAME+"= ?, "+EMAIL+"= ?, "+PHONE+"= ?  WHERE "+EMAIL+"= ?";
+	    final String UPDATE_CUST = "UPDATE "+CUSTOMER_TABLE+" "
+	            + "SET "+FIRST_NAME+"= ?, "+LAST_NAME+"= ?, "+EMAIL+"= ?, "+PHONE+"= ?  WHERE "+CUST_ID+"= ?";
 	    
 	    boolean updateSucceeded = false;
 	    
@@ -142,7 +125,7 @@ public class DataBase implements DataSource {
 	        pStmt.setString(2, cust.getLastName());
 	        pStmt.setString(3, cust.getEmail());
 	        pStmt.setString(4, cust.getPhone());
-	        pStmt.setString(5, cust.getEmail());
+	        pStmt.setLong(5, cust.getId());
 	        
 	        updateSucceeded = pStmt.executeUpdate() == 1;
 	        
@@ -174,20 +157,19 @@ public class DataBase implements DataSource {
 	}
 	
 	@Override
-	public boolean deleteCustomer(Customer customer) {
-	    return deleteCustomer(customer.getEmail());
-	}
-	
-	public boolean deleteCustomer(String email) {
-	    final String DELETE_CUST = "DELETE FROM "+CUSTOMER_TABLE+" WHERE "+EMAIL+"= ?";
+	public boolean deleteCustomer(Customer cust) {
+	    
+	    final String DELETE_CUST = "DELETE FROM "+CUSTOMER_TABLE+" WHERE "+CUST_ID+"= ?";
 	    
 	    boolean deleteSucceeded = false;
 	    
 	    try (PreparedStatement pStmt = conn.prepareStatement(DELETE_CUST)) {
-	        pStmt.setString(1, email);
+	        pStmt.setLong(1, cust.getId());
 	        
 	        int rowsAffected = pStmt.executeUpdate();
+	        
 	        assert rowsAffected <= 1: "Panic Stations!! More than one customer was deleted!!";
+	        
 	        deleteSucceeded = rowsAffected == 1;
 	        
 	    } catch (SQLException sqle) {
@@ -197,14 +179,14 @@ public class DataBase implements DataSource {
 	}
 	
 	@Override
-	public String fetchPassword(String email) {
+	public String fetchPassword(Customer cust) {
 	    final String GET_PASS = "SELECT "+PASSWORD+" FROM "+CUSTOMER_TABLE+" WHERE "+EMAIL+"= ?";
 	    
 	    String password = "";
 	    
-	    try (PreparedStatement pStmt = conn.prepareStatement(GET_PASS) ) {
+	    try (PreparedStatement pStmt = conn.prepareStatement(GET_PASS)) {
 	        
-	        pStmt.setString(1, email);
+	        pStmt.setString(1, cust.getEmail());
 	        ResultSet rs = pStmt.executeQuery();
 	        
 	        if(rs.first()) {
@@ -219,12 +201,12 @@ public class DataBase implements DataSource {
 
 	@Override
 	public Reservation saveReservation(Customer cust, LocalDate start, LocalDate end, List<Room> rooms) {
-//	    final String INSERT_RES = String.format("INSERT INTO %s (%s, %s, %s) VALUES (?, ?, ?)", 
-//	            RESERVATION_TABLE, CUST_ID_FK, START, END);
-	    final String INSERT_RES = String.format("INSERT INTO %s (%s) VALUES (?)", RES_TABLE, CUST_ID_FK);
+
+	    final String INSERT_RES = "INSERT INTO "+RES_TABLE+" ("+CUST_ID_FK+") VALUES (?)";
 	    
-	    final String INSERT_ROOM_RES = String.format("INSERT INTO %s (%s, %s, %s, %s) values (?, ?, ?, ?)", 
-	            ROOM_RES_TABLE, ROOM_ID_FK, RES_ID_FK, START, END);
+	    final String INSERT_ROOM_RES = "INSERT INTO "+ROOM_RES_TABLE+" ("+ROOM_ID_FK+", "+RES_ID_FK+", "
+	    + START+", "+END+") values (?, ?, ?, ?)";
+	 
 	    
 	    try(PreparedStatement insrtRes = conn.prepareStatement(INSERT_RES, Statement.RETURN_GENERATED_KEYS); 
 	                PreparedStatement insrtRoomRes = conn.prepareStatement(INSERT_ROOM_RES)) {
@@ -277,26 +259,27 @@ public class DataBase implements DataSource {
 	
 	@Override
     public List<Reservation> fetchReservations(Customer customer) {
-	    final String GET_CUST_RES = "SELECT DISTINCT "+RES_ID+", "+START+", "+END+" FROM "+RES_TABLE + 
-	            " RIGHT JOIN "+ROOM_RES_TABLE+" ON "+RES_ID+" = "+ RES_ID_FK + 
-	            " where "+CUST_ID_FK+" = ?;";
+	    final String GET_CUST_RES = "SELECT DISTINCT "+RES_ID+", "+START+", "+END+" FROM "+RES_TABLE 
+	            + " RIGHT JOIN "+ROOM_RES_TABLE+" ON "+RES_ID+" = "+ RES_ID_FK
+	            + " where "+CUST_ID_FK+" = ?;";
 	    
 	    List<Reservation> reservations = new ArrayList<>();
 	    
 	    try (PreparedStatement pStmt = conn.prepareStatement(GET_CUST_RES)) {
 	        
 	        pStmt.setLong(1, customer.getId());
-//	        System.out.println(pStmt);
 	        
 	        ResultSet rs = pStmt.executeQuery();
 	        
 	        while (rs.next()) {
-	            reservations.add(new Reservation(rs.getLong(RES_ID), customer, rs.getDate(START).toLocalDate(),
-	                    rs.getDate(END).toLocalDate(), null));
+	            
+	            long resId = rs.getLong(RES_ID);
+	            LocalDate startDate = rs.getDate(START).toLocalDate();
+	            LocalDate endDate = rs.getDate(END).toLocalDate();
+	            List<Room> rooms = getResRooms(rs.getLong(RES_ID));
+	            
+	            reservations.add(new Reservation(resId, customer, startDate, endDate, rooms));
 	        }
-	        
-	        reservations.stream()
-	                .forEach(r -> r.setRooms(getReservationRooms(r)));
 	        
 	    } catch (SQLException sqle) {
 	        System.err.println(sqle);
@@ -305,15 +288,14 @@ public class DataBase implements DataSource {
 	    return reservations;
 	}
 	
-	public List<Room> getReservationRooms(Reservation res) {
+	public List<Room> getResRooms(long resId) {
         final String GET_ROOMS = "SELECT "+ROOM_ID+", "+MAX_GUESTS+", "+ROOM_PRICE+" from "+ROOM_RES_TABLE
                 + " inner join "+ROOM_TABLE+" on "+ROOM_ID_FK+" = "+ROOM_ID+" where "+RES_ID_FK+" = ?;";
         
         List<Room> rooms = new ArrayList<>();
         
         try (PreparedStatement pStmt = conn.prepareStatement(GET_ROOMS)) {
-            pStmt.setLong(1, res.getId());
-//            System.out.println(pStmt);
+            pStmt.setLong(1, resId);
             
             ResultSet rs = pStmt.executeQuery();
             
@@ -358,17 +340,21 @@ public class DataBase implements DataSource {
     }
     
     @Override
-    public Map<Integer, Room> getRooms() {
+    public Map<Long, Room> getAllRooms() {
         
         final String GET_ROOMS = "SELECT * FROM "+ROOM_TABLE;
         
-        Map<Integer, Room> rooms = new HashMap<>();
+        Map<Long, Room> rooms = new HashMap<>();
         
         try (PreparedStatement pStmt = conn.prepareStatement(GET_ROOMS)){
             ResultSet rs = pStmt.executeQuery();
             
+            long roomId = rs.getLong(ROOM_ID);
+            BigDecimal pricePerNight = rs.getBigDecimal(ROOM_PRICE);
+            int maxGuests = rs.getInt(MAX_GUESTS);
+            
             while(rs.next()) {
-                rooms.put(rs.getInt(ROOM_ID), new Room(rs.getInt(ROOM_ID), rs.getBigDecimal(ROOM_PRICE), rs.getInt(MAX_GUESTS)));
+                rooms.put(roomId, new Room(roomId, pricePerNight, maxGuests));
             }
         } catch (SQLException sqle) {
             System.err.println(sqle.getMessage());
@@ -377,36 +363,39 @@ public class DataBase implements DataSource {
     }
     
     @Override
-    public Map<Integer, Room> getUnreservedRooms(LocalDate start, LocalDate end) {
-        Map<Integer, Room> rooms = new HashMap<>();
+    public Map<Long, Room> getUnreservedRooms(LocalDate startDate, LocalDate endDate) {
+        Map<Long, Room> rooms = new HashMap<>();
         
         final String UNRES_ROOMS = "SELECT "+ROOM_ID+", "+ROOM_PRICE+", "+MAX_GUESTS+" FROM "+ROOM_TABLE
                 +" WHERE "+ROOM_ID+" NOT IN( "
                         + "SELECT "+ROOM_ID+" FROM "+ROOM_TABLE
                         + " INNER JOIN "+ROOM_RES_TABLE+" ON "+ROOM_ID+" = "+ ROOM_ID_FK
-                        + " WHERE "+START+" BETWEEN @start AND @end OR "+END+" BETWEEN @start AND @end "
-                                + "OR @start BETWEEN "+START+" AND "+END+")";
-        
-//        final String UNRES_ROOMS = "SELECT "+ROOM_PRICE+", "+MAX_GUESTS+", "+ROOM_ID+" FROM "+ROOM_TABLE
-//                + " LEFT JOIN "+ROOM_RES_TABLE+" ON "+ROOM_ID+" = "+ROOM_ID_FK
-//                + " LEFT JOIN "+RESERVATION_TABLE+" ON "+RES_ID_FK+" = "+RES_ID
-//                + " WHERE "+END+" < ? OR "+START+" > ?"
-//                + " OR "+START+" IS NULL";
+                        + " WHERE "+START+" BETWEEN ? AND ? OR "+END+" BETWEEN ? AND ? "
+                        + "OR ? BETWEEN "+START+" AND "+END+")";
         
         try (PreparedStatement pStmt = conn.prepareStatement(UNRES_ROOMS)) {
-            pStmt.executeUpdate("SET @start="+pStmt.enquoteLiteral(start.toString()));
-            pStmt.executeUpdate("SET @end="+pStmt.enquoteLiteral(end.toString()));
             
-//            pStmt.setDate(1, java.sql.Date.valueOf(start));
-//            pStmt.setDate(2, java.sql.Date.valueOf(end));
+            Date start = Date.valueOf(startDate);
+            Date end = Date.valueOf(endDate);
+            
+            pStmt.setDate(1, start);
+            pStmt.setDate(2, end);
+            pStmt.setDate(3, start);
+            pStmt.setDate(4, end);
+            pStmt.setDate(5, start);
             
             System.out.println(pStmt);
             
             ResultSet rs = pStmt.executeQuery();
             
+            
+            
             while (rs.next()) {
-                rooms.put(rs.getInt(ROOM_ID), new Room(rs.getInt(ROOM_ID), rs.getBigDecimal(ROOM_PRICE), 
-                        rs.getInt(MAX_GUESTS)));
+                long roomId = rs.getLong(ROOM_ID);
+                BigDecimal pricePerNight = rs.getBigDecimal(ROOM_PRICE);
+                int maxGuests = rs.getInt(MAX_GUESTS);
+                
+                rooms.put(roomId, new Room(roomId, pricePerNight, maxGuests));
             }
             
         } catch (SQLException e) {

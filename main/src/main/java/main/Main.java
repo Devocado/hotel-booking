@@ -40,7 +40,6 @@ public class Main {
             
 //            clearScreen(0);
             System.out.print(resource.getString("mainMenu"));
-            //System.out.print("Please select an option\n1 - Reservations\n2 - Manage account\n0 - Exit\n>>>");
             if (sc.hasNextInt()) {
                 switch (Integer.parseInt(sc.nextLine())) {
                     case 0:
@@ -61,8 +60,8 @@ public class Main {
                 sc.nextLine();
             }
         }
-		System.out.println(cust);
-		cust = new Customer(7, "Josephine", "Snow", "josnow@starmail.com", null);
+//		System.out.println(cust);
+//		cust = new Customer(7, "Josephine", "Snow", "josnow@starmail.com", null);
 //		System.out.println(dataSource.fetchReservations(cust));
 	}
 	
@@ -137,15 +136,29 @@ public class Main {
 	
 	public static Reservation createReservation() {
 	    LocalDate start = null, end = null;
-	    int numGuests = 0;
-	    boolean isValid = false;
+	    int numGuests = -1;
 	    
-	    while (!isValid) {
+	    while (true) {
 
             System.out.print(resource.getString("startDate"));
             String startInput = sc.nextLine();
             System.out.print(resource.getString("endDate"));
             String endInput = sc.nextLine();
+            
+            try {
+                start = LocalDate.parse(startInput);
+                end = LocalDate.parse(endInput);
+                
+                if (start.isAfter(LocalDate.now()) && end.isAfter(start)) {
+                    break;
+                }
+            } catch (DateTimeParseException e) {
+                System.out.println(resource.getString("invalidDate"));
+            }
+	    }
+	    
+	    boolean validGuests = false;
+	    while (!validGuests) {
             System.out.print(resource.getString("numGuests"));
             
             if (sc.hasNextInt()) {
@@ -153,17 +166,12 @@ public class Main {
                 sc.nextLine();
             }
             
-            try {
-                start = LocalDate.parse(startInput);
-                end = LocalDate.parse(endInput);
-                
-                if (start.isAfter(LocalDate.now()) && end.isAfter(start) && numGuests > 0) {
-                    isValid = true;
-                }
-            } catch (DateTimeParseException e) {}
+            if (numGuests > 0) {
+                break;
+            }
 	    }
 	    
-	    Map<Integer, Room> availableRooms = dataSource.getUnreservedRooms(start, end);
+	    Map<Long, Room> availableRooms = dataSource.getUnreservedRooms(start, end);
 	    int availableCapacity = availableRooms.values().stream().mapToInt(Room::getMaxGuests).sum();
         if (availableCapacity < numGuests) {
             System.out.println(resource.getString("roomsNotAvailable"));
@@ -175,7 +183,7 @@ public class Main {
 	    return dataSource.saveReservation(cust, start, end, rooms);
 	}
 	
-	public static List<Room> chooseRooms(Map<Integer, Room> availableRooms, int guests) { 
+	public static List<Room> chooseRooms(Map<Long, Room> availableRooms, int guests) { 
 	    
 	    List<Room> chosenRooms = new ArrayList<>();
 	    System.out.println(resource.getString("roomMenu"));
@@ -186,13 +194,13 @@ public class Main {
 	    boolean hasExited = false;
 	    while (!hasExited) {
 	        System.out.println(">>>");
-	        if (!sc.hasNextInt()) {
+	        if (!sc.hasNextLong()) {
 	            sc.nextLine();
 	            System.out.println("incorrectRoomNumber");
 	            continue;
 	        }
 	            
-	        int roomNum = sc.nextInt();
+	        long roomNum = sc.nextLong();
 	        sc.nextLine();
 	        
             if (!availableRooms.containsKey(roomNum)) {
@@ -238,7 +246,7 @@ public class Main {
 	    System.out.print(resource.getString("oldPassword"));
         String oldPassword = sc.nextLine();
         
-        if (validateCustomer(cust.getEmail(), oldPassword) ) {
+        if (validateCustomer(cust, oldPassword) ) {
         
             System.out.print(resource.getString("newPassword"));
             String newPassword = sc.nextLine();
@@ -304,7 +312,8 @@ public class Main {
         System.out.print(resource.getString("password"));
 	    String password = sc.nextLine();
         
-        if (validateCustomer(email, password)) {
+	    Customer cust = dataSource.fetchCustomer(email);
+        if (cust != null && validateCustomer(cust, password)) {
             System.out.print(resource.getString("successfulLogin"));
             return dataSource.fetchCustomer(email);
         }
@@ -364,8 +373,8 @@ public class Main {
 	    }
 	}
 	
-	public static boolean validateCustomer(String email, String password) {
-        return (password.equals(dataSource.fetchPassword(email)) ) ? true : false;
+	public static boolean validateCustomer(Customer cust, String password) {
+        return password.equals(dataSource.fetchPassword(cust)) ? true : false;
     }
 
 	public static DataSource loadDataSource() {
